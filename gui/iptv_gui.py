@@ -227,34 +227,3 @@ if __name__ == "__main__":
     window = IPTVGui()
     window.show()
     sys.exit(app.exec())
-                        timestamp = os.path.basename(file).replace("run_", "").replace(".log", "")
-                        status = "✅ Success" if any("completed" in line.lower() for line in lines) else "⚠️ Check log"
-                        text += f"• {timestamp}: {status}\n"
-                except Exception as e:
-                    text += f"• {file}: ❌ Error reading log\n"
-
-        self.output.setPlainText(text)
-
-    def show_env_validator(self):
-        required_vars = [
-            "TMDB_API_KEY",
-            "EPG_SOURCE_TOKEN",
-            "M3U_SOURCE_TOKEN"
-        ]
-        text = "🔐 Environment Validator:\n"
-
-        for var in required_vars:
-            value = os.environ.get(var)
-            if value:
-                text += f"• {var}: ✅ Present\n"
-            else:
-                text += f"• {var}: ❌ Missing\n"
-
-        self.output.setPlainText(text)
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = IPTVGui()
-    window.show()
-    sys.exit(app.exec())
-            
