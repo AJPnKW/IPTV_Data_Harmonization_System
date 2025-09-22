@@ -1,4 +1,4 @@
-﻿# IPTV Harmonization System — Windows GUI Control Panel
+# IPTV Harmonization System — Windows GUI Control Panel
 # Requires: Python 3.10+, PyQt6, requests, pyyaml
 
 import sys
