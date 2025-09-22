@@ -200,7 +200,7 @@ class IPTVGui(QWidget):
                         timestamp = os.path.basename(file).replace("run_", "").replace(".log", "")
                         status = "✅ Success" if any("completed" in line.lower() for line in lines) else "⚠️ Check log"
                         text += f"• {timestamp}: {status}\n"
-                except Exception as e:
+                except Exception:
                     text += f"• {file}: ❌ Error reading log\n"
 
         self.output.setPlainText(text)
