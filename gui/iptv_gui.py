@@ -160,6 +160,7 @@ class IPTVGui(QWidget):
             text += f"• {r.get('match')} → {r.get('url')}\n"
 
         self.output.setPlainText(text)
+
     def show_preview_panel(self):
         m3uPath = "data/transformed/transformed_m3u.json"
         epgPath = "data/transformed/transformed_epg.json"
