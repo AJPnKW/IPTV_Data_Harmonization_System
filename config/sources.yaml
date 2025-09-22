@@ -1,0 +1,13 @@
+﻿# Source Registry — M3U and EPG inputs
+sources:
+  - name: m3u_US
+    type: m3u
+    country: US
+    url: "https://example.com/playlist.m3u"
+    decompress: false
+
+  - name: epg_CA
+    type: epg
+    country: CA
+    url: "https://example.com/guide.xml.gz"
+    decompress: true

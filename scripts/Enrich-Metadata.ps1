@@ -1,15 +1,20 @@
-﻿# Requires: API keys stored in config\api_keys.yaml
+﻿# Requires: API keys stored as environment variables
 # External APIs: TMDB, OMDB, TVMaze, Trakt, Google Geocoding, OpenAI
 
-Import-Module powershell-yaml
-$apiConfigPath = ".\config\api_keys.yaml"
 $inputEPG = ".\data\reconciled\matched_channels.json"
 $outputPath = ".\data\enriched"
 
 New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
 
-# Load API keys
-$keys = ConvertFrom-Yaml (Get-Content $apiConfigPath -Raw)
+# Load API keys from environment
+$keys = @{
+    tmdb             = $env:TMDB_API_KEY
+    google_geocoding = $env:GOOGLE_API_KEY
+    omdb             = $env:OMDB_API_KEY
+    tvmaze           = $env:TVMAZE_API_KEY
+    trakt            = $env:TRAKT_API_KEY
+    openai           = $env:OPENAI_API_KEY
+}
 
 # Load EPG data
 $channels = Get-Content $inputEPG | ConvertFrom-Json
@@ -40,6 +45,14 @@ function Enrich-With-Geocoding($location) {
         }
     } catch {}
     return $location
+}
+
+foreach ($k in $keys.Keys) {
+    if (-not $keys[$k]) {
+        Write-Host "❌ Missing environment variable for: $k"
+    } else {
+        Write-Host "✅ Loaded: $k"
+    }
 }
 
 foreach ($c in $channels) {
