@@ -99,10 +99,10 @@
     - The page has two main sections: Shows and Movies.
     - Shows are organized by Show > Seasons > Episodes.
     - Each section has a +/– toggle to show/hide details.
-    - Shows include: Name, TMDB ID, Overview.
+    - Shows include: Name + Overview in one row.
     - Seasons include: Season Number, Year, Episode Count.
     - Episodes include: Episode Number, Name, Date, Runtime, Description.
-    - Movies include: Name, Release Date, Runtime, Overview.
+    - Movies include: Name, Release Date, Runtime, Overview (all in one row).
 
     Adding a New Show:
     - Copy the entire block from <!-- START SHOW --> to <!-- END SHOW -->.
@@ -143,7 +143,7 @@
             <h3 id="show-1-toggle" tabindex="0" onclick="toggleSection('show-1')"><span class="toggle">+</span> Only Murders in the Building (2021) [107113]</h3>
             <div id="show-1" class="hidden">
                 <table>
-                    <tr><th>Overview</th><td>Three strangers share an obsession with true crime and suddenly find themselves wrapped up in one.</td></tr>
+                    <tr><th>Name</th><td>Only Murders in the Building (2021) [107113]</td><td>Three strangers share an obsession with true crime and suddenly find themselves wrapped up in one.</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -156,7 +156,34 @@
                             <!-- Add more episodes here by copying the <tr> block -->
                         </table>
                     </div>
-                    <!-- Add more seasons here by copying the season block -->
+                    <h3 id="show-1-season-2-toggle" tabindex="0" onclick="toggleSection('show-1-season-2')"><span class="toggle">+</span> Season 2 (2022) • 10 Episodes</h3>
+                    <div id="show-1-season-2" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
+                            <!-- Add episodes for Season 2 here -->
+                        </table>
+                    </div>
+                    <h3 id="show-1-season-3-toggle" tabindex="0" onclick="toggleSection('show-1-season-3')"><span class="toggle">+</span> Season 3 (2023) • 10 Episodes</h3>
+                    <div id="show-1-season-3" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
+                            <!-- Add episodes for Season 3 here -->
+                        </table>
+                    </div>
+                    <h3 id="show-1-season-4-toggle" tabindex="0" onclick="toggleSection('show-1-season-4')"><span class="toggle">+</span> Season 4 (2024) • 10 Episodes</h3>
+                    <div id="show-1-season-4" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
+                            <!-- Add episodes for Season 4 here -->
+                        </table>
+                    </div>
+                    <h3 id="show-1-season-5-toggle" tabindex="0" onclick="toggleSection('show-1-season-5')"><span class="toggle">+</span> Season 5 (2025) • 10 Episodes</h3>
+                    <div id="show-1-season-5" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
+                            <!-- Add episodes for Season 5 here -->
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -167,7 +194,7 @@
             <h3 id="show-2-toggle" tabindex="0" onclick="toggleSection('show-2')"><span class="toggle">+</span> High Potential (2024) [231803]</h3>
             <div id="show-2" class="hidden">
                 <table>
-                    <tr><th>Overview</th><td>Morgan is a single mom with an exceptional mind, whose unconventional knack for solving crimes leads to an unusual and unstoppable partnership with a by-the-book seasoned detective.</td></tr>
+                    <tr><th>Name</th><td>High Potential (2024) [231803]</td><td>Morgan is a single mom with an exceptional mind, whose unconventional knack for solving crimes leads to an unusual and unstoppable partnership with a by-the-book seasoned detective.</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -205,7 +232,7 @@
             <h3 id="show-3-toggle" tabindex="0" onclick="toggleSection('show-3')"><span class="toggle">+</span> The Diplomat (2023) [149668]</h3>
             <div id="show-3" class="hidden">
                 <table>
-                    <tr><th>Overview</th><td>In the midst of an international crisis, a career diplomat lands in a high-profile job she’s unsuited for, with tectonic implications for her marriage and her political future.</td></tr>
+                    <tr><th>Name</th><td>The Diplomat (2023) [149668]</td><td>In the midst of an international crisis, a career diplomat lands in a high-profile job she’s unsuited for, with tectonic implications for her marriage and her political future.</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -233,7 +260,7 @@
             <h3 id="show-4-toggle" tabindex="0" onclick="toggleSection('show-4')"><span class="toggle">+</span> English Teacher (2024) [236184]</h3>
             <div id="show-4" class="hidden">
                 <table>
-                    <tr><th>Overview</th><td>A high school teacher in Austin tries to balance the competing demands of the students and their parents in a world where the rules seem to change every day.</td></tr>
+                    <tr><th>Name</th><td>English Teacher (2024) [236184]</td><td>A high school teacher in Austin tries to balance the competing demands of the students and their parents in a world where the rules seem to change every day.</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -263,7 +290,7 @@
             <h3 id="show-5-toggle" tabindex="0" onclick="toggleSection('show-5')"><span class="toggle">+</span> RuPaul's Drag Race UK (2019) [95754]</h3>
             <div id="show-5" class="hidden">
                 <table>
-                    <tr><th>Overview</th><td>RuPaul has made the trip across the pond in search of a queen with the most charisma, uniqueness, nerve and talent in all the land.</td></tr>
+                    <tr><th>Name</th><td>RuPaul's Drag Race UK (2019) [95754]</td><td>RuPaul has made the trip across the pond in search of a queen with the most charisma, uniqueness, nerve and talent in all the land.</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -298,10 +325,8 @@
         <!-- START MOVIE -->
         <div class="movie-section">
             <table>
-                <tr><th>Name</th><td>The Conjuring: Last Rites (2025)</td></tr>
-                <tr><th>Release Date</th><td>2025-09-05</td></tr>
-                <tr><th>Runtime</th><td>2h 15m</td></tr>
-                <tr><th>Overview</th><td>Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities they must confront.</td></tr>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
+                <tr><td>The Conjuring: Last Rites (2025)</td><td>2025-09-05</td><td>2h 15m</td><td>Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities they must confront.</td></tr>
             </table>
         </div>
         <!-- END MOVIE -->
@@ -309,10 +334,8 @@
         <!-- START MOVIE -->
         <div class="movie-section">
             <table>
-                <tr><th>Name</th><td>The Naked Gun (2025)</td></tr>
-                <tr><th>Release Date</th><td>2025-09-30</td></tr>
-                <tr><th>Runtime</th><td>1h 25m</td></tr>
-                <tr><th>Overview</th><td>Only one man has the particular set of skills... to lead Police Squad and save the world: Lt. Frank Drebin Jr.</td></tr>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
+                <tr><td>The Naked Gun (2025)</td><td>2025-09-30</td><td>1h 25m</td><td>Only one man has the particular set of skills... to lead Police Squad and save the world: Lt. Frank Drebin Jr.</td></tr>
             </table>
         </div>
         <!-- END MOVIE -->
@@ -320,10 +343,8 @@
         <!-- START MOVIE -->
         <div class="movie-section">
             <table>
-                <tr><th>Name</th><td>TRON: Ares (2025)</td></tr>
-                <tr><th>Release Date</th><td>2025-10-10</td></tr>
-                <tr><th>Runtime</th><td>1h 59m</td></tr>
-                <tr><th>Overview</th><td>A highly sophisticated Program called Ares is sent from the digital world into the real world on a dangerous mission, marking humankind's first encounter with A.I. beings.</td></tr>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
+                <tr><td>TRON: Ares (2025)</td><td>2025-10-10</td><td>1h 59m</td><td>A highly sophisticated Program called Ares is sent from the digital world into the real world on a dangerous mission, marking humankind's first encounter with A.I. beings.</td></tr>
             </table>
         </div>
         <!-- END MOVIE -->
@@ -331,10 +352,8 @@
         <!-- START MOVIE -->
         <div class="movie-section">
             <table>
-                <tr><th>Name</th><td>Freakier Friday (2025)</td></tr>
-                <tr><th>Release Date</th><td>2025-08-08</td></tr>
-                <tr><th>Runtime</th><td>1h 51m</td></tr>
-                <tr><th>Overview</th><td>Years after Tess and Anna endured an identity crisis, Anna now has a daughter of her own and a soon-to-be stepdaughter. As they navigate the myriad challenges that come when two families merge, Tess and Anna discover lightning might indeed strike twice.</td></tr>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
+                <tr><td>Freakier Friday (2025)</td><td>2025-08-08</td><td>1h 51m</td><td>Years after Tess and Anna endured an identity crisis, Anna now has a daughter of her own and a soon-to-be stepdaughter. As they navigate the myriad challenges that come when two families merge, Tess and Anna discover lightning might indeed strike twice.</td></tr>
             </table>
         </div>
         <!-- END MOVIE -->
@@ -342,10 +361,8 @@
         <!-- START MOVIE -->
         <div class="movie-section">
             <table>
-                <tr><th>Name</th><td>The Woman in Cabin 10 (2025)</td></tr>
-                <tr><th>Release Date</th><td>2025-10-10</td></tr>
-                <tr><th>Runtime</th><td>1h 35m</td></tr>
-                <tr><th>Overview</th><td>On a lavish yacht for an assignment, a journalist sees a passenger go overboard. But when no one believes her, she risks her life to uncover the truth.</td></tr>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
+                <tr><td>The Woman in Cabin 10 (2025)</td><td>2025-10-10</td><td>1h 35m</td><td>On a lavish yacht for an assignment, a journalist sees a passenger go overboard. But when no one believes her, she risks her life to uncover the truth.</td></tr>
             </table>
         </div>
         <!-- END MOVIE -->
@@ -353,10 +370,8 @@
         <!-- START MOVIE -->
         <div class="movie-section">
             <table>
-                <tr><th>Name</th><td>M3GAN 2.0 (2025)</td></tr>
-                <tr><th>Release Date</th><td>2025-06-27</td></tr>
-                <tr><th>Runtime</th><td>2h</td></tr>
-                <tr><th>Overview</th><td>After the underlying tech for M3GAN is stolen and misused by a powerful defense contractor to create a military-grade weapon known as Amelia, M3GAN's creator Gemma realizes that the only option is to resurrect M3GAN and give her a few upgrades, making her faster, stronger, and more lethal.</td></tr>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
+                <tr><td>M3GAN 2.0 (2025)</td><td>2025-06-27</td><td>2h</td><td>After the underlying tech for M3GAN is stolen and misused by a powerful defense contractor to create a military-grade weapon known as Amelia, M3GAN's creator Gemma realizes that the only option is to resurrect M3GAN and give her a few upgrades, making her faster, stronger, and more lethal.</td></tr>
             </table>
         </div>
         <!-- END MOVIE -->
