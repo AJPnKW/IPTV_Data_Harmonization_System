@@ -85,9 +85,9 @@
     INSTRUCTIONS FOR EDITING THIS PAGE
     ---------------------------------
     This page is designed for "The Boys Shows," a catalog of TV shows and movies viewable on Android TV.
-    Below are instructions for non-programmers to add, edit, or delete content.
+    Below are instructions for non-programmers to add, edit, or delete content. These instructions are comments and will not appear in the browser.
 
-    **How to Edit the Page**:
+    How to Edit the Page:
     1. Open this file in a text editor (e.g., Notepad on Windows, TextEdit on Mac, or any code editor like VS Code).
     2. Scroll to the section you want to edit (Shows or Movies).
     3. Follow the comments labeled "ADD NEW SHOW HERE" or "ADD NEW MOVIE HERE" to add new entries.
@@ -95,7 +95,7 @@
     5. To delete, remove the entire block for a show, season, episode, or movie (from the start comment to the end comment).
     6. Save the file and open it in a web browser on your Android TV to view changes.
 
-    **Structure**:
+    Structure:
     - The page has two main sections: Shows and Movies.
     - Shows are organized by Show > Seasons > Episodes.
     - Each section has a +/– toggle to show/hide details.
@@ -104,29 +104,29 @@
     - Episodes include: Episode Number, Name, Date, Runtime, Description.
     - Movies include: Name, Release Date, Runtime, Overview.
 
-    **Adding a New Show**:
+    Adding a New Show:
     - Copy the entire block from <!-- START SHOW --> to <!-- END SHOW -->.
     - Paste it below the last show in the Shows section (before <!-- ADD NEW SHOW HERE -->).
     - Update the show name, TMDB ID, overview, seasons, and episodes as needed.
-    - Change the IDs (e.g., show-1, show-1-season-1) to unique values (e.g., show-2, show-2-season-1).
+    - Change the IDs (e.g., show-1, show-1-season-1) to unique values (e.g., show-6, show-6-season-1).
 
-    **Adding a New Season**:
+    Adding a New Season:
     - Copy the entire season block from <div class="season-section"> to </div> within a show.
     - Paste it below the last season in the desired show.
     - Update the season number, year, episode count, and episodes.
     - Change the season ID (e.g., show-1-season-1) to a unique value (e.g., show-1-season-2).
 
-    **Adding a New Episode**:
+    Adding a New Episode:
     - Copy an episode row (<tr>...</tr>) from an existing episode table.
     - Paste it below the last episode in the desired season’s table.
     - Update the episode number, name, date, runtime, and description.
 
-    **Adding a New Movie**:
+    Adding a New Movie:
     - Copy the entire block from <!-- START MOVIE --> to <!-- END MOVIE -->.
     - Paste it below the last movie in the Movies section (before <!-- ADD NEW MOVIE HERE -->).
     - Update the movie name, release date, runtime, and overview.
 
-    **Tips**:
+    Tips:
     - Keep the HTML structure intact (don’t delete <div>, <table>, or other tags).
     - Use TMDB (themoviedb.org) to find show/movie details like IDs and overviews.
     - For missing details (e.g., TBD episodes), use "TBD" or "N/A" to avoid empty fields.
