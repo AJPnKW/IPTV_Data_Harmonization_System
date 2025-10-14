@@ -108,6 +108,18 @@
     - Copy the entire block from <!-- START SHOW --> to <!-- END SHOW -->.
     - Paste it below the last show in the Shows section (before <!-- ADD NEW SHOW HERE -->).
     - Update the show name, TMDB ID, overview, seasons, and episodes as needed.
+    - Change the IDs (e.g., show-1, show-1-season-1) to unique values (e.g., show-2, show-2-season-1).
+
+    **Adding a New Season**:
+    - Copy the entire season block from <div class="season-section"> to </div> within a show.
+    - Paste it below the last season in the desired show.
+    - Update the season number, year, episode count, and episodes.
+    - Change the season ID (e.g., show-1-season-1) to a unique value (e.g., show-1-season-2).
+
+    **Adding a New Episode**:
+    - Copy an episode row (<tr>...</tr>) from an existing episode table.
+    - Paste it below the last episode in the desired season’s table.
+    - Update the episode number, name, date, runtime, and description.
 
     **Adding a New Movie**:
     - Copy the entire block from <!-- START MOVIE --> to <!-- END MOVIE -->.
@@ -117,6 +129,7 @@
     **Tips**:
     - Keep the HTML structure intact (don’t delete <div>, <table>, or other tags).
     - Use TMDB (themoviedb.org) to find show/movie details like IDs and overviews.
+    - For missing details (e.g., TBD episodes), use "TBD" or "N/A" to avoid empty fields.
     - Test changes in a browser to ensure the page looks correct.
     -->
 
@@ -149,48 +162,86 @@
         </div>
         <!-- END SHOW -->
 
-        <!-- ADD NEW SHOW HERE -->
-        <!-- Copy the entire START SHOW to END SHOW block and paste here to add a new show. Update the show name, TMDB ID, overview, seasons, and episodes. Change the IDs (e.g., show-1, show-1-season-1) to unique values (e.g., show-2, show-2-season-1). -->
-    </div>
-
-    <!-- Movies Section -->
-    <h2 id="movies-toggle" tabindex="0" onclick="toggleSection('movies')"><span class="toggle">+</span> Movies</h2>
-    <div id="movies" class="hidden">
-        <!-- START MOVIE -->
-        <div class="movie-section">
-            <table>
-                <tr><th>Name</th><td>The Conjuring: Last Rites (2025)</td></tr>
-                <tr><th>Release Date</th><td>2025-09-05</td></tr>
-                <tr><th>Runtime</th><td>2h 15m</td></tr>
-                <tr><th>Overview</th><td>Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities they must confront.</td></tr>
-            </table>
+        <!-- START SHOW -->
+        <div class="show-section">
+            <h3 id="show-2-toggle" tabindex="0" onclick="toggleSection('show-2')"><span class="toggle">+</span> High Potential (2024) [231803]</h3>
+            <div id="show-2" class="hidden">
+                <table>
+                    <tr><th>Overview</th><td>Morgan is a single mom with an exceptional mind, whose unconventional knack for solving crimes leads to an unusual and unstoppable partnership with a by-the-book seasoned detective.</td></tr>
+                </table>
+                <!-- Seasons -->
+                <div class="season-section">
+                    <h3 id="show-2-season-2-toggle" tabindex="0" onclick="toggleSection('show-2-season-2')"><span class="toggle">+</span> Season 2 (2025) • 18 Episodes</h3>
+                    <div id="show-2-season-2" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
+                            <tr><td>1</td><td>Pawns</td><td>September 16, 2025</td><td>44m</td><td>While working tirelessly to shield her family from the Game Maker's threats, another crime drags Morgan back into his game and the LAPD must decide whether to trust her instincts before the next move turns fatal.</td></tr>
+                            <tr><td>2</td><td>Checkmate</td><td>September 23, 2025</td><td>44m</td><td>As the Major Crimes team desperately seek answers amidst a string of unresolved crimes, Morgan suspects the Game Maker is responsible. Meanwhile, Daphne and Oz set out to find Roman, and Elliot prepares a surprise act for his school’s talent show.</td></tr>
+                            <tr><td>3</td><td>Eleven Minutes</td><td>September 30, 2025</td><td>44m</td><td>When a man with a troubled past is killed under mysterious circumstances, Morgan and the LAPD uncover a tragic motive behind his death. Meanwhile, Morgan opens up to Ava about her father, forcing Ava to confront truths she isn’t ready to face.</td></tr>
+                            <tr><td>4</td><td>Behind the Music</td><td>October 7, 2025</td><td>N/A</td><td>An investigation involving the murder of a local singer uncovers details that reopen a strikingly similar decades-old cold case. Later on, the team rallies around Soto after she is passed over for the captain’s chair.</td></tr>
+                            <tr><td>5</td><td>Content Warning</td><td>October 14, 2025</td><td>N/A</td><td>When a social media stunt turns deadly, Morgan and Karadec head to an influencer content house to track down answers. Meanwhile, the LAPD team adjusts to Captain Nick Wagner's new role, and Ava seeks out more information on Roman’s disappearance.</td></tr>
+                            <tr><td>6</td><td>Chasing Ghosts</td><td>October 21, 2025</td><td>N/A</td><td>It's almost Halloween, and a wealthy lawyer is found dead in his "haunted" Victorian mansion. As the team investigates the spooky case, Captain Wagner surprises everyone with his skills. At home, Elliot plays mediator between Morgan and Ava.</td></tr>
+                            <tr><td>7</td><td>The One That Got Away</td><td>October 28, 2025</td><td>N/A</td><td>When a priceless painting is stolen in a museum heist, Morgan and Karadec team up with an art-recovery expert to unravel a tangled case and fierce ownership battle. Meanwhile, Soto is determined to uncover the secrets hidden inside Roman’s backpack.</td></tr>
+                            <tr><td>8</td><td>TBD</td><td>November 4, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>9</td><td>TBD</td><td>November 11, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>10</td><td>TBD</td><td>November 18, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>11</td><td>TBD</td><td>November 25, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>12</td><td>TBD</td><td>December 2, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>13</td><td>TBD</td><td>December 9, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>14</td><td>TBD</td><td>December 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>15</td><td>TBD</td><td>TBD</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>16</td><td>TBD</td><td>TBD</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>17</td><td>TBD</td><td>TBD</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>18</td><td>TBD</td><td>TBD</td><td>TBD</td><td>TBD</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        <!-- END MOVIE -->
+        <!-- END SHOW -->
 
-        <!-- ADD NEW MOVIE HERE -->
-        <!-- Copy the entire START MOVIE to END MOVIE block and paste here to add a new movie. Update the name, release date, runtime, and overview. -->
-    </div>
+        <!-- START SHOW -->
+        <div class="show-section">
+            <h3 id="show-3-toggle" tabindex="0" onclick="toggleSection('show-3')"><span class="toggle">+</span> The Diplomat (2023) [149668]</h3>
+            <div id="show-3" class="hidden">
+                <table>
+                    <tr><th>Overview</th><td>In the midst of an international crisis, a career diplomat lands in a high-profile job she’s unsuited for, with tectonic implications for her marriage and her political future.</td></tr>
+                </table>
+                <!-- Seasons -->
+                <div class="season-section">
+                    <h3 id="show-3-season-3-toggle" tabindex="0" onclick="toggleSection('show-3-season-3')"><span class="toggle">+</span> Season 3 (2025) • 8 Episodes</h3>
+                    <div id="show-3-season-3" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
+                            <tr><td>1</td><td>Episode 1</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>2</td><td>Episode 2</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>3</td><td>Episode 3</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>4</td><td>Episode 4</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>5</td><td>Episode 5</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>6</td><td>Episode 6</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>7</td><td>Episode 7</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                            <tr><td>8</td><td>Episode 8 / Season Finale</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END SHOW -->
 
-    <script>
-        // JavaScript for hide/show functionality
-        function toggleSection(id) {
-            const section = document.getElementById(id);
-            const toggle = section.previousElementSibling.querySelector('.toggle');
-            if (section.classList.contains('hidden')) {
-                section.classList.remove('hidden');
-                toggle.textContent = '–';
-                section.previousElementSibling.setAttribute('aria-expanded', 'true');
-            } else {
-                section.classList.add('hidden');
-                toggle.textContent = '+';
-                section.previousElementSibling.setAttribute('aria-expanded', 'false');
-            }
-        }
-
-        // Initialize ARIA attributes
-        document.querySelectorAll('.toggle').forEach(toggle => {
-            toggle.parentElement.setAttribute('aria-expanded', 'false');
-        });
-    </script>
-</body>
-</html>
+        <!-- START SHOW -->
+        <div class="show-section">
+            <h3 id="show-4-toggle" tabindex="0" onclick="toggleSection('show-4')"><span class="toggle">+</span> English Teacher (2024) [236184]</h3>
+            <div id="show-4" class="hidden">
+                <table>
+                    <tr><th>Overview</th><td>A high school teacher in Austin tries to balance the competing demands of the students and their parents in a world where the rules seem to change every day.</td></tr>
+                </table>
+                <!-- Seasons -->
+                <div class="season-section">
+                    <h3 id="show-4-season-2-toggle" tabindex="0" onclick="toggleSection('show-4-season-2')"><span class="toggle">+</span> Season 2 (2025) • 10 Episodes</h3>
+                    <div id="show-4-season-2" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
+                            <tr><td>1</td><td>Covid in America</td><td>September 25, 2025</td><td>22m</td><td>Evan pushes back against the students as they try to modernize the school play.</td></tr>
+                            <tr><td>2</td><td>Trash</td><td>September 25, 2025</td><td>21m</td><td>Evan attempts to update the school's waste management system.</td></tr>
+                            <tr><td>3</td><td>Grant's Dinner Party</td><td>September 25, 2025</td><td>25m</td><td>Grant invites the teachers to a dinner party at his home.</td></tr>
+                            <tr><td>4</td><td>College Week</td><td>October 2, 2025</td><td>22m</td><td>As the students prepare their college applications, Evan starts to question his own hiring.</td></tr>
