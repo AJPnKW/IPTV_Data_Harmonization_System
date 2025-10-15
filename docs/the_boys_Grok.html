@@ -58,11 +58,15 @@
             width: 100%;
             border-collapse: collapse;
             margin: 10px 0;
+            table-layout: fixed; /* Helps with many columns */
         }
         th, td {
-            padding: 10px;
+            padding: 8px;
             text-align: left;
             border-bottom: 1px solid #444;
+            word-wrap: break-word;
+            overflow: hidden;
+            max-width: 150px; /* Prevents overly wide columns */
         }
         th {
             background-color: #333;
@@ -71,16 +75,376 @@
         .show-section, .season-section, .episode-section, .movie-section {
             margin-left: 20px;
         }
+        /* Watch/Watched Buttons */
+        .status-buttons {
+            white-space: nowrap;
+        }
+        .status-btn {
+            padding: 5px 10px;
+            margin: 2px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            min-width: 80px;
+            tabindex: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-btn:focus {
+            outline: 3px solid #ffeb3b;
+        }
+        .status-btn.watching {
+            background-color: #2196F3;
+            color: white;
+        }
+        .status-btn.watched {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .status-btn.unmark {
+            background-color: #f44336;
+            color: white;
+        }
+        /* Watched/Watching Row Styling */
+        tr.watching {
+            background-color: rgba(33, 150, 243, 0.1);
+        }
+        tr.watched {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        /* Watch Links as Buttons with Icons */
+        .watch-link {
+            display: inline-block;
+            padding: 3px 6px;
+            background-color: #333;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 0.9rem;
+            margin: 1px;
+            white-space: nowrap;
+        }
+        .watch-link:hover, .watch-link:focus {
+            background-color: #555;
+            outline: 2px solid #ffeb3b;
+        }
         /* Focus styles for TV navigation */
-        a, .toggle, h2, h3 {
+        a, .toggle, h2, h3, .status-btn {
             outline: none;
         }
-        a:focus, .toggle:focus, h2:focus, h3:focus {
+        a:focus, .toggle:focus, h2:focus, h3:focus, .status-btn:focus {
             outline: 3px solid #ffeb3b;
         }
     </style>
 </head>
 <body>
+    <h1>The Boys Shows</h1>
+
+    <!-- Shows Section -->
+    <h2 id="shows-toggle" tabindex="0" onclick="toggleSection('shows')"><span class="toggle">+</span> Shows</h2>
+    <div id="shows" class="hidden">
+        <!-- START SHOW -->
+        <div class="show-section">
+            <h3 id="show-1-toggle" tabindex="0" onclick="toggleSection('show-1')"><span class="toggle">+</span> Only Murders in the Building (2021) [107113]</h3>
+            <div id="show-1" class="hidden">
+                <table>
+                    <tr><th>Name</th><td>Only Murders in the Building (2021) [107113]</td><td>Three strangers share an obsession with true crime and suddenly find themselves wrapped up in one.</td><td>Streaming Source</td><td>Hulu</td></tr>
+                </table>
+                <!-- Seasons -->
+                <div class="season-section">
+                    <h3 id="show-1-season-1-toggle" tabindex="0" onclick="toggleSection('show-1-season-1')"><span class="toggle">+</span> Season 1 (2021) • 10 Episodes</h3>
+                    <div id="show-1-season-1" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <tr id="episode-show1-s1-e1" class="">
+                                <td>1</td><td>True Crime</td><td>August 31, 2021</td><td>34m</td><td>Upper West Side neighbors Charles, Oliver & Mabel bond over a shared love of true crime. When a fellow resident dies in their building, the trio determine to solve the mystery and record an accompanying podcast.</td><td>Hulu</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-show1-s1-e1', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-show1-s1-e1', 'watched')">✅ Mark Watched</button></td>
+                            </tr>
+                            <tr id="episode-show1-s1-e2" class="">
+                                <td>2</td><td>Who Is Tim Kono?</td><td>August 31, 2021</td><td>30m</td><td>The group begins researching the victim. Meanwhile, Mabel's secretive past starts to be unraveled.</td><td>Hulu</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-show1-s1-e2', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-show1-s1-e2', 'watched')">✅ Mark Watched</button></td>
+                            </tr>
+                            <!-- Add more episodes here by copying the <tr> block. Update ID, data, links, and source. -->
+                        </table>
+                    </div>
+                    <h3 id="show-1-season-2-toggle" tabindex="0" onclick="toggleSection('show-1-season-2')"><span class="toggle">+</span> Season 2 (2022) • 10 Episodes</h3>
+                    <div id="show-1-season-2" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <!-- Add episodes for Season 2 here. Copy <tr> from above, update data/links/source. -->
+                        </table>
+                    </div>
+                    <h3 id="show-1-season-3-toggle" tabindex="0" onclick="toggleSection('show-1-season-3')"><span class="toggle">+</span> Season 3 (2023) • 10 Episodes</h3>
+                    <div id="show-1-season-3" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <!-- Add episodes for Season 3 here -->
+                        </table>
+                    </div>
+                    <h3 id="show-1-season-4-toggle" tabindex="0" onclick="toggleSection('show-1-season-4')"><span class="toggle">+</span> Season 4 (2024) • 10 Episodes</h3>
+                    <div id="show-1-season-4" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <!-- Add episodes for Season 4 here -->
+                        </table>
+                    </div>
+                    <h3 id="show-1-season-5-toggle" tabindex="0" onclick="toggleSection('show-1-season-5')"><span class="toggle">+</span> Season 5 (2025) • 10 Episodes</h3>
+                    <div id="show-1-season-5" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <!-- Add episodes for Season 5 here -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END SHOW -->
+
+        <!-- START SHOW -->
+        <div class="show-section">
+            <h3 id="show-2-toggle" tabindex="0" onclick="toggleSection('show-2')"><span class="toggle">+</span> High Potential (2024) [231803]</h3>
+            <div id="show-2" class="hidden">
+                <table>
+                    <tr><th>Name</th><td>High Potential (2024) [231803]</td><td>Morgan is a single mom with an exceptional mind, whose unconventional knack for solving crimes leads to an unusual and unstoppable partnership with a by-the-book seasoned detective.</td><td>Streaming Source</td><td>ABC</td></tr>
+                </table>
+                <!-- Seasons -->
+                <div class="season-section">
+                    <h3 id="show-2-season-2-toggle" tabindex="0" onclick="toggleSection('show-2-season-2')"><span class="toggle">+</span> Season 2 (2025) • 18 Episodes</h3>
+                    <div id="show-2-season-2" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <tr id="episode-show2-s2-e1" class="">
+                                <td>1</td><td>Pawns</td><td>September 16, 2025</td><td>44m</td><td>While working tirelessly to shield her family from the Game Maker's threats, another crime drags Morgan back into his game and the LAPD must decide whether to trust her instincts before the next move turns fatal.</td><td>ABC</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-show2-s2-e1', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-show2-s2-e1', 'watched')">✅ Mark Watched</button></td>
+                            </tr>
+                            <tr id="episode-show2-s2-e2" class="">
+                                <td>2</td><td>Checkmate</td><td>September 23, 2025</td><td>44m</td><td>As the Major Crimes team desperately seek answers amidst a string of unresolved crimes, Morgan suspects the Game Maker is responsible. Meanwhile, Daphne and Oz set out to find Roman, and Elliot prepares a surprise act for his school’s talent show.</td><td>ABC</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-show2-s2-e2', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-show2-s2-e2', 'watched')">✅ Mark Watched</button></td>
+                            </tr>
+                            <!-- Add more episodes here... -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END SHOW -->
+
+        <!-- START SHOW -->
+        <div class="show-section">
+            <h3 id="show-3-toggle" tabindex="0" onclick="toggleSection('show-3')"><span class="toggle">+</span> The Diplomat (2023) [149668]</h3>
+            <div id="show-3" class="hidden">
+                <table>
+                    <tr><th>Name</th><td>The Diplomat (2023) [149668]</td><td>In the midst of an international crisis, a career diplomat lands in a high-profile job she’s unsuited for, with tectonic implications for her marriage and her political future.</td><td>Streaming Source</td><td>Netflix</td></tr>
+                </table>
+                <!-- Seasons -->
+                <div class="season-section">
+                    <h3 id="show-3-season-3-toggle" tabindex="0" onclick="toggleSection('show-3-season-3')"><span class="toggle">+</span> Season 3 (2025) • 8 Episodes</h3>
+                    <div id="show-3-season-3" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <tr id="episode-show3-s3-e1" class="">
+                                <td>1</td><td>Episode 1</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td><td>Netflix</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-show3-s3-e1', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-show3-s3-e1', 'watched')">✅ Mark Watched</button></td>
+                            </tr>
+                            <!-- Add more episodes here... -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END SHOW -->
+
+        <!-- START SHOW -->
+        <div class="show-section">
+            <h3 id="show-4-toggle" tabindex="0" onclick="toggleSection('show-4')"><span class="toggle">+</span> English Teacher (2024) [236184]</h3>
+            <div id="show-4" class="hidden">
+                <table>
+                    <tr><th>Name</th><td>English Teacher (2024) [236184]</td><td>A high school teacher in Austin tries to balance the competing demands of the students and their parents in a world where the rules seem to change every day.</td><td>Streaming Source</td><td>Freevee</td></tr>
+                </table>
+                <!-- Seasons -->
+                <div class="season-section">
+                    <h3 id="show-4-season-2-toggle" tabindex="0" onclick="toggleSection('show-4-season-2')"><span class="toggle">+</span> Season 2 (2025) • 10 Episodes</h3>
+                    <div id="show-4-season-2" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <tr id="episode-show4-s2-e1" class="">
+                                <td>1</td><td>Covid in America</td><td>September 25, 2025</td><td>22m</td><td>Evan pushes back against the students as they try to modernize the school play.</td><td>Freevee</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-show4-s2-e1', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-show4-s2-e1', 'watched')">✅ Mark Watched</button></td>
+                            </tr>
+                            <!-- Add more episodes here... -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END SHOW -->
+
+        <!-- START SHOW -->
+        <div class="show-section">
+            <h3 id="show-5-toggle" tabindex="0" onclick="toggleSection('show-5')"><span class="toggle">+</span> RuPaul's Drag Race UK (2019) [95754]</h3>
+            <div id="show-5" class="hidden">
+                <table>
+                    <tr><th>Name</th><td>RuPaul's Drag Race UK (2019) [95754]</td><td>RuPaul has made the trip across the pond in search of a queen with the most charisma, uniqueness, nerve and talent in all the land.</td><td>Streaming Source</td><td>BBC iPlayer</td></tr>
+                </table>
+                <!-- Seasons -->
+                <div class="season-section">
+                    <h3 id="show-5-season-7-toggle" tabindex="0" onclick="toggleSection('show-5-season-7')"><span class="toggle">+</span> Series 7 (2025) • 10 Episodes</h3>
+                    <div id="show-5-season-7" class="hidden">
+                        <table>
+                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                            <tr id="episode-show5-s7-e1" class="">
+                                <td>1</td><td>Episode 1</td><td>September 25, 2025</td><td>1h 14m</td><td>A hot new cast of queens enter the werk room as RuPaul kicks off his legendary race. Joel Dommett joins Michelle Visage and Alan Carr on the judging panel.</td><td>BBC iPlayer</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-show5-s7-e1', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-show5-s7-e1', 'watched')">✅ Mark Watched</button></td>
+                            </tr>
+                            <!-- Add more episodes here... -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END SHOW -->
+
+        <!-- ADD NEW SHOW HERE -->
+        <!-- Copy the entire START SHOW to END SHOW block and paste here to add a new show. Update the show name, TMDB ID, overview, seasons, and episodes. Change the IDs (e.g., show-5, show-5-season-7) to unique values (e.g., show-6, show-6-season-1). -->
+    </div>
+
+    <!-- Movies Section -->
+    <h2 id="movies-toggle" tabindex="0" onclick="toggleSection('movies')"><span class="toggle">+</span> Movies</h2>
+    <div id="movies" class="hidden">
+        <!-- START MOVIE -->
+        <div class="movie-section">
+            <table>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                <tr id="movie-conjuring" class="">
+                    <td>The Conjuring: Last Rites (2025)</td><td>2025-09-05</td><td>2h 15m</td><td>Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities they must confront.</td><td>Max</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-conjuring', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-conjuring', 'watched')">✅ Mark Watched</button></td>
+                </tr>
+            </table>
+        </div>
+        <!-- END MOVIE -->
+
+        <!-- START MOVIE -->
+        <div class="movie-section">
+            <table>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                <tr id="movie-nakedgun" class="">
+                    <td>The Naked Gun (2025)</td><td>2025-09-30</td><td>1h 25m</td><td>Only one man has the particular set of skills... to lead Police Squad and save the world: Lt. Frank Drebin Jr.</td><td>N/A</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-nakedgun', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-nakedgun', 'watched')">✅ Mark Watched</button></td>
+                </tr>
+            </table>
+        </div>
+        <!-- END MOVIE -->
+
+        <!-- START MOVIE -->
+        <div class="movie-section">
+            <table>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                <tr id="movie-tron" class="">
+                    <td>TRON: Ares (2025)</td><td>2025-10-10</td><td>1h 59m</td><td>A highly sophisticated Program called Ares is sent from the digital world into the real world on a dangerous mission, marking humankind's first encounter with A.I. beings.</td><td>N/A</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-tron', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-tron', 'watched')">✅ Mark Watched</button></td>
+                </tr>
+            </table>
+        </div>
+        <!-- END MOVIE -->
+
+        <!-- START MOVIE -->
+        <div class="movie-section">
+            <table>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                <tr id="movie-freakier" class="">
+                    <td>Freakier Friday (2025)</td><td>2025-08-08</td><td>1h 51m</td><td>Years after Tess and Anna endured an identity crisis, Anna now has a daughter of her own and a soon-to-be stepdaughter. As they navigate the myriad challenges that come when two families merge, Tess and Anna discover lightning might indeed strike twice.</td><td>Disney+</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-freakier', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-freakier', 'watched')">✅ Mark Watched</button></td>
+                </tr>
+            </table>
+        </div>
+        <!-- END MOVIE -->
+
+        <!-- START MOVIE -->
+        <div class="movie-section">
+            <table>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                <tr id="movie-cabin10" class="">
+                    <td>The Woman in Cabin 10 (2025)</td><td>2025-10-10</td><td>1h 35m</td><td>On a lavish yacht for an assignment, a journalist sees a passenger go overboard. But when no one believes her, she risks her life to uncover the truth.</td><td>N/A</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-cabin10', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-cabin10', 'watched')">✅ Mark Watched</button></td>
+                </tr>
+            </table>
+        </div>
+        <!-- END MOVIE -->
+
+        <!-- START MOVIE -->
+        <div class="movie-section">
+            <table>
+                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th><th>Streaming Source</th><th>VidSrc 📺</th><th>Mapple 🌐</th><th>NunFlix 🎬</th><th>TBD ❓</th></tr>
+                <tr id="movie-m3gan2" class="">
+                    <td>M3GAN 2.0 (2025)</td><td>2025-06-27</td><td>2h</td><td>After the underlying tech for M3GAN is stolen and misused by a powerful defense contractor to create a military-grade weapon known as Amelia, M3GAN's creator Gemma realizes that the only option is to resurrect M3GAN and give her a few upgrades, making her faster, stronger, and more lethal.</td><td>N/A</td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td><a href="#" class="watch-link">N/A</a></td><td class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-m3gan2', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-m3gan2', 'watched')">✅ Mark Watched</button></td>
+                </tr>
+            </table>
+        </div>
+        <!-- END MOVIE -->
+
+        <!-- ADD NEW MOVIE HERE -->
+        <!-- Copy the entire START MOVIE to END MOVIE block and paste here to add a new movie. Update the name, release date, runtime, and overview. -->
+    </div>
+
+    <script>
+        // Hide/Show Toggle
+        function toggleSection(id) {
+            const section = document.getElementById(id);
+            const toggle = section.previousElementSibling.querySelector('.toggle');
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                toggle.textContent = '–';
+                section.previousElementSibling.setAttribute('aria-expanded', 'true');
+            } else {
+                section.classList.add('hidden');
+                toggle.textContent = '+';
+                section.previousElementSibling.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        // Status Toggle (Watching/Watched)
+        function toggleStatus(entryId, action) {
+            const row = document.getElementById(entryId);
+            const currentState = row.dataset.status || 'none';
+            let newState = currentState;
+            const buttonsCell = row.querySelector('.status-buttons');
+
+            if (action === 'watching' && currentState !== 'watching') {
+                newState = 'watching';
+            } else if (action === 'watched' && currentState !== 'watched') {
+                newState = 'watched';
+            } else {
+                newState = 'none'; // Unmark
+            }
+
+            row.dataset.status = newState;
+            row.className = newState; // Apply class for styling
+
+            // Update buttons with icons
+            buttonsCell.innerHTML = '';
+            if (newState === 'none') {
+                buttonsCell.innerHTML += '<button class="status-btn" onclick="toggleStatus(\'' + entryId + '\', \'watching\')">⏳ Mark Watching</button>';
+                buttonsCell.innerHTML += '<button class="status-btn" onclick="toggleStatus(\'' + entryId + '\', \'watched\')">✅ Mark Watched</button>';
+            } else if (newState === 'watching') {
+                buttonsCell.innerHTML += '<button class="status-btn unmark" onclick="toggleStatus(\'' + entryId + '\', \'none\')">❌ Unmark</button>';
+                buttonsCell.innerHTML += '<button class="status-btn watched" onclick="toggleStatus(\'' + entryId + '\', \'watched\')">✅ Mark Watched</button>';
+            } else if (newState === 'watched') {
+                buttonsCell.innerHTML += '<button class="status-btn unmark" onclick="toggleStatus(\'' + entryId + '\', \'none\')">❌ Unmark</button>';
+                buttonsCell.innerHTML += '<button class="status-btn watching" onclick="toggleStatus(\'' + entryId + '\', \'watching\')">⏳ Mark Watching</button>';
+            }
+
+            // Save to localStorage
+            localStorage.setItem('status-' + entryId, newState);
+
+            // Load on page load
+            window.addEventListener('load', function() {
+                document.querySelectorAll('[id^="episode-"], [id^="movie-"]').forEach(row => {
+                    const savedState = localStorage.getItem('status-' + row.id);
+                    if (savedState) {
+                        toggleStatus(row.id, savedState === 'none' ? 'none' : savedState); // Re-apply
+                    }
+                });
+            });
+        }
+
+        // Initialize ARIA
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.toggle').forEach(toggle => {
+                toggle.parentElement.setAttribute('aria-expanded', 'false');
+            });
+        });
+    </script>
+
     <!--
     INSTRUCTIONS FOR EDITING THIS PAGE
     ---------------------------------
@@ -99,10 +463,10 @@
     - The page has two main sections: Shows and Movies.
     - Shows are organized by Show > Seasons > Episodes.
     - Each section has a +/– toggle to show/hide details.
-    - Shows include: Name + Overview in one row.
+    - Shows include: Name + Overview in one row + Streaming Source.
     - Seasons include: Season Number, Year, Episode Count.
-    - Episodes include: Episode Number, Name, Date, Runtime, Description.
-    - Movies include: Name, Release Date, Runtime, Overview (all in one row).
+    - Episodes include: Episode Number, Name, Date, Runtime, Description, Streaming Source, VidSrc, Mapple, NunFlix, TBD.
+    - Movies include: Name, Release Date, Runtime, Overview, Streaming Source, VidSrc, Mapple, NunFlix, TBD (all in one row).
 
     Adding a New Show:
     - Copy the entire block from <!-- START SHOW --> to <!-- END SHOW -->.
@@ -119,287 +483,26 @@
     Adding a New Episode:
     - Copy an episode row (<tr>...</tr>) from an existing episode table.
     - Paste it below the last episode in the desired season’s table.
-    - Update the episode number, name, date, runtime, and description.
+    - Update the episode number, name, date, runtime, description, streaming source, and watch links.
+    - Ensure the ID (e.g., episode-show1-s1-e1) is unique (use show#-season#-episode# format).
 
     Adding a New Movie:
     - Copy the entire block from <!-- START MOVIE --> to <!-- END MOVIE -->.
     - Paste it below the last movie in the Movies section (before <!-- ADD NEW MOVIE HERE -->).
-    - Update the movie name, release date, runtime, and overview.
+    - Update the movie name, release date, runtime, overview, streaming source, and watch links.
+    - Ensure the ID (e.g., movie-conjuring) is unique.
+
+    New Features:
+    - Streaming Source: Edit the cell for the primary platform (e.g., "Hulu", "Max", "N/A").
+    - Watch Links: Replace "N/A" with URLs in VidSrc 📺, Mapple 🌐, NunFlix 🎬, and TBD ❓ columns (e.g., <a href="https://vidsrc.to/embed/tv/107113/s01e01">📺</a>). Use TMDB/IMDB IDs for embeds if applicable.
+    - Buttons: Click ⏳ to mark watching, ✅ to mark watched, ❌ to unmark. States persist via localStorage.
 
     Tips:
     - Keep the HTML structure intact (don’t delete <div>, <table>, or other tags).
     - Use TMDB (themoviedb.org) to find show/movie details like IDs and overviews.
     - For missing details (e.g., TBD episodes), use "TBD" or "N/A" to avoid empty fields.
+    - Test watch links externally before adding. Add unique IDs to new rows for status persistence.
     - Test changes in a browser to ensure the page looks correct.
     -->
-
-    <h1>The Boys Shows</h1>
-
-    <!-- Shows Section -->
-    <h2 id="shows-toggle" tabindex="0" onclick="toggleSection('shows')"><span class="toggle">+</span> Shows</h2>
-    <div id="shows" class="hidden">
-        <!-- START SHOW -->
-        <div class="show-section">
-            <h3 id="show-1-toggle" tabindex="0" onclick="toggleSection('show-1')"><span class="toggle">+</span> Only Murders in the Building (2021) [107113]</h3>
-            <div id="show-1" class="hidden">
-                <table>
-                    <tr><th>Name</th><td>Only Murders in the Building (2021) [107113]</td><td>Three strangers share an obsession with true crime and suddenly find themselves wrapped up in one.</td></tr>
-                </table>
-                <!-- Seasons -->
-                <div class="season-section">
-                    <h3 id="show-1-season-1-toggle" tabindex="0" onclick="toggleSection('show-1-season-1')"><span class="toggle">+</span> Season 1 (2021) • 10 Episodes</h3>
-                    <div id="show-1-season-1" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <tr><td>1</td><td>True Crime</td><td>August 31, 2021</td><td>34m</td><td>Upper West Side neighbors Charles, Oliver & Mabel bond over a shared love of true crime. When a fellow resident dies in their building, the trio determine to solve the mystery and record an accompanying podcast.</td></tr>
-                            <tr><td>2</td><td>Who Is Tim Kono?</td><td>August 31, 2021</td><td>30m</td><td>The group begins researching the victim. Meanwhile, Mabel’s secretive past starts to be unraveled.</td></tr>
-                            <!-- Add more episodes here by copying the <tr> block -->
-                        </table>
-                    </div>
-                    <h3 id="show-1-season-2-toggle" tabindex="0" onclick="toggleSection('show-1-season-2')"><span class="toggle">+</span> Season 2 (2022) • 10 Episodes</h3>
-                    <div id="show-1-season-2" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <!-- Add episodes for Season 2 here -->
-                        </table>
-                    </div>
-                    <h3 id="show-1-season-3-toggle" tabindex="0" onclick="toggleSection('show-1-season-3')"><span class="toggle">+</span> Season 3 (2023) • 10 Episodes</h3>
-                    <div id="show-1-season-3" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <!-- Add episodes for Season 3 here -->
-                        </table>
-                    </div>
-                    <h3 id="show-1-season-4-toggle" tabindex="0" onclick="toggleSection('show-1-season-4')"><span class="toggle">+</span> Season 4 (2024) • 10 Episodes</h3>
-                    <div id="show-1-season-4" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <!-- Add episodes for Season 4 here -->
-                        </table>
-                    </div>
-                    <h3 id="show-1-season-5-toggle" tabindex="0" onclick="toggleSection('show-1-season-5')"><span class="toggle">+</span> Season 5 (2025) • 10 Episodes</h3>
-                    <div id="show-1-season-5" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <!-- Add episodes for Season 5 here -->
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- END SHOW -->
-
-        <!-- START SHOW -->
-        <div class="show-section">
-            <h3 id="show-2-toggle" tabindex="0" onclick="toggleSection('show-2')"><span class="toggle">+</span> High Potential (2024) [231803]</h3>
-            <div id="show-2" class="hidden">
-                <table>
-                    <tr><th>Name</th><td>High Potential (2024) [231803]</td><td>Morgan is a single mom with an exceptional mind, whose unconventional knack for solving crimes leads to an unusual and unstoppable partnership with a by-the-book seasoned detective.</td></tr>
-                </table>
-                <!-- Seasons -->
-                <div class="season-section">
-                    <h3 id="show-2-season-2-toggle" tabindex="0" onclick="toggleSection('show-2-season-2')"><span class="toggle">+</span> Season 2 (2025) • 18 Episodes</h3>
-                    <div id="show-2-season-2" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <tr><td>1</td><td>Pawns</td><td>September 16, 2025</td><td>44m</td><td>While working tirelessly to shield her family from the Game Maker's threats, another crime drags Morgan back into his game and the LAPD must decide whether to trust her instincts before the next move turns fatal.</td></tr>
-                            <tr><td>2</td><td>Checkmate</td><td>September 23, 2025</td><td>44m</td><td>As the Major Crimes team desperately seek answers amidst a string of unresolved crimes, Morgan suspects the Game Maker is responsible. Meanwhile, Daphne and Oz set out to find Roman, and Elliot prepares a surprise act for his school’s talent show.</td></tr>
-                            <tr><td>3</td><td>Eleven Minutes</td><td>September 30, 2025</td><td>44m</td><td>When a man with a troubled past is killed under mysterious circumstances, Morgan and the LAPD uncover a tragic motive behind his death. Meanwhile, Morgan opens up to Ava about her father, forcing Ava to confront truths she isn’t ready to face.</td></tr>
-                            <tr><td>4</td><td>Behind the Music</td><td>October 7, 2025</td><td>N/A</td><td>An investigation involving the murder of a local singer uncovers details that reopen a strikingly similar decades-old cold case. Later on, the team rallies around Soto after she is passed over for the captain’s chair.</td></tr>
-                            <tr><td>5</td><td>Content Warning</td><td>October 14, 2025</td><td>N/A</td><td>When a social media stunt turns deadly, Morgan and Karadec head to an influencer content house to track down answers. Meanwhile, the LAPD team adjusts to Captain Nick Wagner's new role, and Ava seeks out more information on Roman’s disappearance.</td></tr>
-                            <tr><td>6</td><td>Chasing Ghosts</td><td>October 21, 2025</td><td>N/A</td><td>It's almost Halloween, and a wealthy lawyer is found dead in his "haunted" Victorian mansion. As the team investigates the spooky case, Captain Wagner surprises everyone with his skills. At home, Elliot plays mediator between Morgan and Ava.</td></tr>
-                            <tr><td>7</td><td>The One That Got Away</td><td>October 28, 2025</td><td>N/A</td><td>When a priceless painting is stolen in a museum heist, Morgan and Karadec team up with an art-recovery expert to unravel a tangled case and fierce ownership battle. Meanwhile, Soto is determined to uncover the secrets hidden inside Roman’s backpack.</td></tr>
-                            <tr><td>8</td><td>TBD</td><td>November 4, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>9</td><td>TBD</td><td>November 11, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>10</td><td>TBD</td><td>November 18, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>11</td><td>TBD</td><td>November 25, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>12</td><td>TBD</td><td>December 2, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>13</td><td>TBD</td><td>December 9, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>14</td><td>TBD</td><td>December 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>15</td><td>TBD</td><td>TBD</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>16</td><td>TBD</td><td>TBD</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>17</td><td>TBD</td><td>TBD</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>18</td><td>TBD</td><td>TBD</td><td>TBD</td><td>TBD</td></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- END SHOW -->
-
-        <!-- START SHOW -->
-        <div class="show-section">
-            <h3 id="show-3-toggle" tabindex="0" onclick="toggleSection('show-3')"><span class="toggle">+</span> The Diplomat (2023) [149668]</h3>
-            <div id="show-3" class="hidden">
-                <table>
-                    <tr><th>Name</th><td>The Diplomat (2023) [149668]</td><td>In the midst of an international crisis, a career diplomat lands in a high-profile job she’s unsuited for, with tectonic implications for her marriage and her political future.</td></tr>
-                </table>
-                <!-- Seasons -->
-                <div class="season-section">
-                    <h3 id="show-3-season-3-toggle" tabindex="0" onclick="toggleSection('show-3-season-3')"><span class="toggle">+</span> Season 3 (2025) • 8 Episodes</h3>
-                    <div id="show-3-season-3" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <tr><td>1</td><td>Episode 1</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>2</td><td>Episode 2</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>3</td><td>Episode 3</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>4</td><td>Episode 4</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>5</td><td>Episode 5</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>6</td><td>Episode 6</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>7</td><td>Episode 7</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                            <tr><td>8</td><td>Episode 8 / Season Finale</td><td>October 16, 2025</td><td>TBD</td><td>TBD</td></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- END SHOW -->
-
-        <!-- START SHOW -->
-        <div class="show-section">
-            <h3 id="show-4-toggle" tabindex="0" onclick="toggleSection('show-4')"><span class="toggle">+</span> English Teacher (2024) [236184]</h3>
-            <div id="show-4" class="hidden">
-                <table>
-                    <tr><th>Name</th><td>English Teacher (2024) [236184]</td><td>A high school teacher in Austin tries to balance the competing demands of the students and their parents in a world where the rules seem to change every day.</td></tr>
-                </table>
-                <!-- Seasons -->
-                <div class="season-section">
-                    <h3 id="show-4-season-2-toggle" tabindex="0" onclick="toggleSection('show-4-season-2')"><span class="toggle">+</span> Season 2 (2025) • 10 Episodes</h3>
-                    <div id="show-4-season-2" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <tr><td>1</td><td>Covid in America</td><td>September 25, 2025</td><td>22m</td><td>Evan pushes back against the students as they try to modernize the school play.</td></tr>
-                            <tr><td>2</td><td>Trash</td><td>September 25, 2025</td><td>21m</td><td>Evan attempts to update the school's waste management system.</td></tr>
-                            <tr><td>3</td><td>Grant's Dinner Party</td><td>September 25, 2025</td><td>25m</td><td>Grant invites the teachers to a dinner party at his home.</td></tr>
-                            <tr><td>4</td><td>College Week</td><td>October 2, 2025</td><td>22m</td><td>As the students prepare their college applications, Evan starts to question his own hiring.</td></tr>
-                            <tr><td>5</td><td>Evan's Mom</td><td>October 2, 2025</td><td>25m</td><td>Evan receives a surprise visit from his mother Elena.</td></tr>
-                            <tr><td>6</td><td>Recruiter</td><td>October 2, 2025</td><td>21m</td><td>A military recruiter comes to the school, and the teachers experiment with new classroom phone policies.</td></tr>
-                            <tr><td>7</td><td>Lake Trip</td><td>October 9, 2025</td><td>20m</td><td>Evan and Malcolm take a vacation while the other teachers administer standardized tests back at school.</td></tr>
-                            <tr><td>8</td><td>Accreditation</td><td>October 9, 2025</td><td>25m</td><td>The teachers get evaluated by outside observers in an effort to earn the school a better rating.</td></tr>
-                            <tr><td>9</td><td>Lock In</td><td>October 16, 2025</td><td>23m</td><td>The teachers oversee the school's overnight lock-in.</td></tr>
-                            <tr><td>10</td><td>Graduation / Season Finale</td><td>October 16, 2025</td><td>25m</td><td>N/A</td></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- END SHOW -->
-
-        <!-- START SHOW -->
-        <div class="show-section">
-            <h3 id="show-5-toggle" tabindex="0" onclick="toggleSection('show-5')"><span class="toggle">+</span> RuPaul's Drag Race UK (2019) [95754]</h3>
-            <div id="show-5" class="hidden">
-                <table>
-                    <tr><th>Name</th><td>RuPaul's Drag Race UK (2019) [95754]</td><td>RuPaul has made the trip across the pond in search of a queen with the most charisma, uniqueness, nerve and talent in all the land.</td></tr>
-                </table>
-                <!-- Seasons -->
-                <div class="season-section">
-                    <h3 id="show-5-season-7-toggle" tabindex="0" onclick="toggleSection('show-5-season-7')"><span class="toggle">+</span> Series 7 (2025) • 10 Episodes</h3>
-                    <div id="show-5-season-7" class="hidden">
-                        <table>
-                            <tr><th>Episode</th><th>Name</th><th>Date</th><th>Runtime</th><th>Description</th></tr>
-                            <tr><td>1</td><td>Episode 1</td><td>September 25, 2025</td><td>1h 14m</td><td>A hot new cast of queens enter the werk room as RuPaul kicks off his legendary race. Joel Dommett joins Michelle Visage and Alan Carr on the judging panel.</td></tr>
-                            <tr><td>2</td><td>Episode 2</td><td>October 2, 2025</td><td>1h 11m</td><td>Supermodel turned comedy star Michelle de Swarte joins Mama Ru, Michelle Visage and Graham Norton on the judging panel as the queens take on the iconic Design Challenge.</td></tr>
-                            <tr><td>3</td><td>Episode 3</td><td>October 9, 2025</td><td>1h 9m</td><td>The queens take on a hyperpop banger for the Girl Group challenge. Girls Aloud legend Nadine Coyle joins RuPaul, Michelle Visage and Graham Norton on the judging panel.</td></tr>
-                            <tr><td>4</td><td>Episode 4</td><td>October 16, 2025</td><td>1h 6m</td><td>There’s bonk-busting drama as actor Jane Horrocks joins Ru, Michelle Visage and Alan Carr on the judging panel, and the queens star in an absolutely fabulous acting challenge.</td></tr>
-                            <tr><td>5</td><td>Episode 5</td><td>October 23, 2025</td><td>1h 4m</td><td>The queens take to the high seas for a cruise-themed talent show. Derry Girl Jamie-Lee O’Donnell joins RuPaul, Michelle Visage and Alan Carr on the judging panel.</td></tr>
-                            <tr><td>6</td><td>Episode 6</td><td>October 30, 2025</td><td>N/A</td><td>We don't have an overview translated in English. Help us expand our database by adding one.</td></tr>
-                            <tr><td>7</td><td>Episode 7</td><td>November 6, 2025</td><td>N/A</td><td>We don't have an overview translated in English. Help us expand our database by adding one.</td></tr>
-                            <tr><td>8</td><td>Episode 8</td><td>November 13, 2025</td><td>N/A</td><td>We don't have an overview translated in English. Help us expand our database by adding one.</td></tr>
-                            <tr><td>9</td><td>Episode 9</td><td>November 20, 2025</td><td>N/A</td><td>We don't have an overview translated in English. Help us expand our database by adding one.</td></tr>
-                            <tr><td>10</td><td>Episode 10 / Season Finale</td><td>November 27, 2025</td><td>N/A</td><td>N/A</td></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- END SHOW -->
-
-        <!-- ADD NEW SHOW HERE -->
-        <!-- Copy the entire START SHOW to END SHOW block and paste here to add a new show. Update the show name, TMDB ID, overview, seasons, and episodes. Change the IDs (e.g., show-5, show-5-season-7) to unique values (e.g., show-6, show-6-season-1). -->
-    </div>
-
-    <!-- Movies Section -->
-    <h2 id="movies-toggle" tabindex="0" onclick="toggleSection('movies')"><span class="toggle">+</span> Movies</h2>
-    <div id="movies" class="hidden">
-        <!-- START MOVIE -->
-        <div class="movie-section">
-            <table>
-                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
-                <tr><td>The Conjuring: Last Rites (2025)</td><td>2025-09-05</td><td>2h 15m</td><td>Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities they must confront.</td></tr>
-            </table>
-        </div>
-        <!-- END MOVIE -->
-
-        <!-- START MOVIE -->
-        <div class="movie-section">
-            <table>
-                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
-                <tr><td>The Naked Gun (2025)</td><td>2025-09-30</td><td>1h 25m</td><td>Only one man has the particular set of skills... to lead Police Squad and save the world: Lt. Frank Drebin Jr.</td></tr>
-            </table>
-        </div>
-        <!-- END MOVIE -->
-
-        <!-- START MOVIE -->
-        <div class="movie-section">
-            <table>
-                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
-                <tr><td>TRON: Ares (2025)</td><td>2025-10-10</td><td>1h 59m</td><td>A highly sophisticated Program called Ares is sent from the digital world into the real world on a dangerous mission, marking humankind's first encounter with A.I. beings.</td></tr>
-            </table>
-        </div>
-        <!-- END MOVIE -->
-
-        <!-- START MOVIE -->
-        <div class="movie-section">
-            <table>
-                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
-                <tr><td>Freakier Friday (2025)</td><td>2025-08-08</td><td>1h 51m</td><td>Years after Tess and Anna endured an identity crisis, Anna now has a daughter of her own and a soon-to-be stepdaughter. As they navigate the myriad challenges that come when two families merge, Tess and Anna discover lightning might indeed strike twice.</td></tr>
-            </table>
-        </div>
-        <!-- END MOVIE -->
-
-        <!-- START MOVIE -->
-        <div class="movie-section">
-            <table>
-                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
-                <tr><td>The Woman in Cabin 10 (2025)</td><td>2025-10-10</td><td>1h 35m</td><td>On a lavish yacht for an assignment, a journalist sees a passenger go overboard. But when no one believes her, she risks her life to uncover the truth.</td></tr>
-            </table>
-        </div>
-        <!-- END MOVIE -->
-
-        <!-- START MOVIE -->
-        <div class="movie-section">
-            <table>
-                <tr><th>Name</th><th>Release Date</th><th>Runtime</th><th>Overview</th></tr>
-                <tr><td>M3GAN 2.0 (2025)</td><td>2025-06-27</td><td>2h</td><td>After the underlying tech for M3GAN is stolen and misused by a powerful defense contractor to create a military-grade weapon known as Amelia, M3GAN's creator Gemma realizes that the only option is to resurrect M3GAN and give her a few upgrades, making her faster, stronger, and more lethal.</td></tr>
-            </table>
-        </div>
-        <!-- END MOVIE -->
-
-        <!-- ADD NEW MOVIE HERE -->
-        <!-- Copy the entire START MOVIE to END MOVIE block and paste here to add a new movie. Update the name, release date, runtime, and overview. -->
-    </div>
-
-    <script>
-        // JavaScript for hide/show functionality
-        function toggleSection(id) {
-            const section = document.getElementById(id);
-            const toggle = section.previousElementSibling.querySelector('.toggle');
-            if (section.classList.contains('hidden')) {
-                section.classList.remove('hidden');
-                toggle.textContent = '–';
-                section.previousElementSibling.setAttribute('aria-expanded', 'true');
-            } else {
-                section.classList.add('hidden');
-                toggle.textContent = '+';
-                section.previousElementSibling.setAttribute('aria-expanded', 'false');
-            }
-        }
-
-        // Initialize ARIA attributes
-        document.querySelectorAll('.toggle').forEach(toggle => {
-            toggle.parentElement.setAttribute('aria-expanded', 'false');
-        });
-    </script>
 </body>
 </html>
