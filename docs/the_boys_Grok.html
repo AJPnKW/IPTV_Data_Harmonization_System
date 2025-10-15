@@ -96,11 +96,13 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            min-width: 80px; /* Prevent collapse */
         }
         .data-table .col.description {
             flex: 2; /* Wider for descriptions */
             white-space: normal;
             word-wrap: break-word;
+            min-width: 150px;
         }
         .data-table .show-row { background-color: #333; }
         .data-table .season-row { background-color: #444; }
@@ -150,19 +152,7 @@
             outline: 3px solid #ffeb3b;
         }
     </style>
-</head>
-<body>
-    <h1>The Boys Shows</h1>
-
-    <!-- Shows Section -->
-    <h2 id="shows-toggle" tabindex="0" onclick="toggleSection('shows')"><span class="toggle">+</span> Shows</h2>
-    <div id="shows" class="hidden"></div>
-
-    <!-- Movies Section -->
-    <h2 id="movies-toggle" tabindex="0" onclick="toggleSection('movies')"><span class="toggle">+</span> Movies</h2>
-    <div id="movies" class="hidden"></div>
-
-    <script>
+    <script defer>
         // Hide/Show Toggle
         function toggleSection(id) {
             const section = document.getElementById(id);
@@ -223,7 +213,7 @@
             });
         }
 
-        // Load Data from File
+        // Load and Parse Data from File
         function loadData() {
             fetch('show+movie_data.txt')
                 .then(response => response.text())
@@ -235,6 +225,7 @@
 
                     lines.forEach(line => {
                         line = line.trim();
+                        if (!line) return; // Skip empty lines
                         if (line.startsWith('SHOWS') || line.startsWith('MOVIES')) {
                             currentSection = line;
                             if (currentSection === 'MOVIES') {
@@ -248,30 +239,30 @@
                         const [type, ...rest] = line.split('|');
                         if (type === 'show') {
                             currentShow = rest;
-                            const [name, overview, date, status, source, schedule] = currentShow;
+                            const [name, overview, date, status, source, schedule] = currentShow.map(field => field.replace(/\n/g, ' ').trim());
                             const showDiv = document.createElement('div');
                             showDiv.className = 'show-section';
-                            showDiv.innerHTML = `<h3 id="show-${name.replace(/\(|\)| /g, '-')}-toggle" tabindex="0" onclick="toggleSection('show-${name.replace(/\(|\)| /g, '-')}')"><span class="toggle">+</span> ${name} <span class="overview">${overview}</span> <span class="source">${source}</span></h3><div id="show-${name.replace(/\(|\)| /g, '-]}" class="hidden"><div class="data-table"><div class="header-row"><div class="col">Name</div><div class="col">Date</div><div class="col">Status</div><div class="col">Source</div><div class="col">Schedule</div></div><div class="data-row show-row"><div class="col">${name}</div><div class="col">${date}</div><div class="col">${status}</div><div class="col">${source}</div><div class="col">${schedule}</div></div></div></div>`;
+                            showDiv.innerHTML = `<h3 class="show-title" id="show-${name.replace(/\(|\)| /g, '-')}-toggle" tabindex="0" onclick="toggleSection('show-${name.replace(/\(|\)| /g, '-')}')"><span class="toggle">+</span> ${name} <span class="overview">${overview}</span> <span class="source">${source}</span></h3><div id="show-${name.replace(/\(|\)| /g, '-]}" class="hidden"><div class="data-table"><div class="header-row"><div class="col">Name</div><div class="col">Date</div><div class="col">Status</div><div class="col">Source</div><div class="col">Schedule</div></div><div class="data-row show-row"><div class="col">${name}</div><div class="col">${date}</div><div class="col">${status}</div><div class="col">${source}</div><div class="col">${schedule}</div></div></div></div>`;
                             document.getElementById('shows').querySelector('.data-table').appendChild(showDiv);
                         } else if (type === 'season' && currentShow) {
                             currentSeason = rest;
-                            const [seasonNum, year, overview, watchStatus] = currentSeason;
+                            const [seasonNum, year, overview, watchStatus] = currentSeason.map(field => field.replace(/\n/g, ' ').trim());
                             const seasonDiv = document.createElement('div');
                             seasonDiv.className = 'season-section';
-                            seasonDiv.innerHTML = `<h3 id="show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}-toggle" tabindex="0" onclick="toggleSection('show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}')"><span class="toggle">+</span> Season ${seasonNum} (${year}) • ${overview.split(' ').length > 10 ? overview.split(' ').slice(0, 10).join(' ') + '...' : overview}</h3><div id="show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}" class="hidden"><div class="data-table"><div class="header-row"><div class="col">Episode</div><div class="col">Name</div><div class="col">Date</div><div class="col description">Description</div><div class="col">Runtime</div><div class="col">Streaming Source</div><div class="col">VidSrc 📺</div><div class="col">Mapple 🌐</div><div class="col">NunFlix 🎬</div><div class="col">TBD ❓</div></div></div></div>`;
+                            seasonDiv.innerHTML = `<h3 class="season-title" id="show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}-toggle" tabindex="0" onclick="toggleSection('show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}')"><span class="toggle">+</span> Season ${seasonNum} (${year}) • ${overview.split(' ').slice(0, 10).join(' ') + (overview.split(' ').length > 10 ? '...' : '')}</h3><div id="show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}" class="hidden"><div class="data-table"><div class="header-row"><div class="col">Episode</div><div class="col">Name</div><div class="col">Date</div><div class="col description">Description</div><div class="col">Runtime</div><div class="col">Streaming Source</div><div class="col">VidSrc 📺</div><div class="col">Mapple 🌐</div><div class="col">NunFlix 🎬</div><div class="col">TBD ❓</div></div></div></div>`;
                             document.getElementById(`show-${currentShow[0].replace(/\(|\)| /g, '-')}`).querySelector('.data-table').appendChild(seasonDiv);
                         } else if (type === 'episode' && currentSeason) {
-                            const [epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = rest;
+                            const [epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = rest.map(field => field.replace(/\n/g, ' ').trim());
                             const epDiv = document.createElement('div');
-                            epDiv.className = 'episode-row data-row';
+                            epDiv.className = `episode-row data-row ${watchStatus}`;
                             epDiv.id = `episode-${currentShow[0].replace(/\(|\)| /g, '-')}-s${currentSeason[0]}-e${epNum}`;
-                            epDiv.innerHTML = `<div class="col">${epNum}</div><div class="col">${name}</div><div class="col">${date}</div><div class="col description">${desc}</div><div class="col">${runtime}</div><div class="col">${source}</div><div class="col">${vidSrc.startsWith('http') ? `<a href="${vidSrc}" class="watch-link" target="_blank">N/A</a>` : vidSrc}</div><div class="col">${mapple.startsWith('http') ? `<a href="${mapple}" class="watch-link" target="_blank">N/A</a>` : mapple}</div><div class="col">${nunFlix.startsWith('http') ? `<a href="${nunFlix}" class="watch-link" target="_blank">N/A</a>` : nunFlix}</div><div class="col">${tbd.startsWith('http') ? `<a href="${tbd}" class="watch-link" target="_blank">N/A</a>` : tbd}</div><div class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-${currentShow[0].replace(/\(|\)| /g, '-')}-s${currentSeason[0]}-e${epNum}', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-${currentShow[0].replace(/\(|\)| /g, '-')}-s${currentSeason[0]}-e${epNum}', 'watched')">✅ Mark Watched</button></div>`;
+                            epDiv.innerHTML = `<div class="col">${epNum}</div><div class="col">${name}</div><div class="col">${date}</div><div class="col description">${desc}</div><div class="col">${runtime}</div><div class="col">${source}</div><div class="col">${vidSrc.startsWith('http') ? `<a href="${vidSrc}" class="watch-link" target="_blank">N/A</a>` : vidSrc}</div><div class="col">${mapple.startsWith('http') ? `<a href="${mapple}" class="watch-link" target="_blank">N/A</a>` : mapple}</div><div class="col">${nunFlix.startsWith('http') ? `<a href="${nunFlix}" class="watch-link" target="_blank">N/A</a>` : nunFlix}</div><div class="col">${tbd.startsWith('http') ? `<a href="${tbd}" class="watch-link" target="_blank">N/A</a>` : tbd}</div><div class="status-buttons"><button class="status-btn" onclick="toggleSection('episode-${currentShow[0].replace(/\(|\)| /g, '-')}-s${currentSeason[0]}-e${epNum}', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleSection('episode-${currentShow[0].replace(/\(|\)| /g, '-')}-s${currentSeason[0]}-e${epNum}', 'watched')">✅ Mark Watched</button></div>`;
                             document.getElementById(`show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${currentSeason[0]}`).querySelector('.data-table').appendChild(epDiv);
                         } else if (type === 'movie') {
-                            const [name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = rest;
+                            const [name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = rest.map(field => field.replace(/\n/g, ' ').trim());
                             const movieDiv = document.createElement('div');
-                            movieDiv.className = 'movie-section';
-                            movieDiv.innerHTML = `<div class="data-table"><div class="header-row"><div class="col">Name</div><div class="col">Release Date</div><div class="col">Runtime</div><div class="col description">Overview</div><div class="col">Streaming Source</div><div class="col">VidSrc 📺</div><div class="col">Mapple 🌐</div><div class="col">NunFlix 🎬</div><div class="col">TBD ❓</div></div><div id="movie-${name.replace(/\(|\)| /g, '-')}" class="movie-row data-row"><div class="col">${name}</div><div class="col">${releaseDate}</div><div class="col">${runtime}</div><div class="col description">${overview}</div><div class="col">${source}</div><div class="col">${vidSrc.startsWith('http') ? `<a href="${vidSrc}" class="watch-link" target="_blank">N/A</a>` : vidSrc}</div><div class="col">${mapple.startsWith('http') ? `<a href="${mapple}" class="watch-link" target="_blank">N/A</a>` : mapple}</div><div class="col">${nunFlix.startsWith('http') ? `<a href="${nunFlix}" class="watch-link" target="_blank">N/A</a>` : nunFlix}</div><div class="col">${tbd.startsWith('http') ? `<a href="${tbd}" class="watch-link" target="_blank">N/A</a>` : tbd}</div><div class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-${name.replace(/\(|\)| /g, '-')}', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-${name.replace(/\(|\)| /g, '-')}', 'watched')">✅ Mark Watched</button></div></div></div>`;
+                            movieDiv.className = `movie-section`;
+                            movieDiv.innerHTML = `<div class="data-table"><div class="header-row"><div class="col">Name</div><div class="col">Release Date</div><div class="col">Runtime</div><div class="col description">Overview</div><div class="col">Streaming Source</div><div class="col">VidSrc 📺</div><div class="col">Mapple 🌐</div><div class="col">NunFlix 🎬</div><div class="col">TBD ❓</div></div><div id="movie-${name.replace(/\(|\)| /g, '-')}" class="movie-row data-row ${watchStatus}"><div class="col">${name}</div><div class="col">${releaseDate}</div><div class="col">${runtime}</div><div class="col description">${overview}</div><div class="col">${source}</div><div class="col">${vidSrc.startsWith('http') ? `<a href="${vidSrc}" class="watch-link" target="_blank">N/A</a>` : vidSrc}</div><div class="col">${mapple.startsWith('http') ? `<a href="${mapple}" class="watch-link" target="_blank">N/A</a>` : mapple}</div><div class="col">${nunFlix.startsWith('http') ? `<a href="${nunFlix}" class="watch-link" target="_blank">N/A</a>` : nunFlix}</div><div class="col">${tbd.startsWith('http') ? `<a href="${tbd}" class="watch-link" target="_blank">N/A</a>` : tbd}</div><div class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-${name.replace(/\(|\)| /g, '-')}', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-${name.replace(/\(|\)| /g, '-')}', 'watched')">✅ Mark Watched</button></div></div></div>`;
                             document.getElementById('movies').querySelector('.data-table').appendChild(movieDiv);
                         }
                     });
@@ -282,5 +273,16 @@
         // Initialize on load
         window.addEventListener('load', loadData);
     </script>
+</head>
+<body>
+    <h1>The Boys Shows</h1>
+
+    <!-- Shows Section -->
+    <h2 id="shows-toggle" tabindex="0" onclick="toggleSection('shows')"><span class="toggle">+</span> Shows</h2>
+    <div id="shows" class="hidden"></div>
+
+    <!-- Movies Section -->
+    <h2 id="movies-toggle" tabindex="0" onclick="toggleSection('movies')"><span class="toggle">+</span> Movies</h2>
+    <div id="movies" class="hidden"></div>
 </body>
 </html>
