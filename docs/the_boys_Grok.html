@@ -29,6 +29,22 @@
             color: #2196F3; /* Blue for Show/Season headers */
             margin-left: 20px;
             cursor: pointer;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+        }
+        h3 span.overview {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-left: 10px;
+        }
+        h3 span.source {
+            font-size: 0.8rem;
+            color: #bbb;
+            margin-left: 10px;
+            background-color: #444;
+            padding: 2px 5px;
+            border-radius: 3px;
         }
         h4 {
             font-size: 1.2rem;
@@ -147,10 +163,10 @@
     <div id="shows" class="hidden">
         <!-- START SHOW -->
         <div class="show-section">
-            <h3 id="show-1-toggle" tabindex="0" onclick="toggleSection('show-1')"><span class="toggle">+</span> Only Murders in the Building (2021) [107113]</h3>
+            <h3 id="show-1-toggle" tabindex="0" onclick="toggleSection('show-1')"><span class="toggle">+</span> Only Murders in the Building (2021) <span class="overview">Three strangers share an obsession with true crime and suddenly find themselves wrapped up in one.</span> <span class="source">Hulu</span></h3>
             <div id="show-1" class="hidden">
                 <table>
-                    <tr><th>Name</th><td>Only Murders in the Building (2021) [107113]</td><td>Three strangers share an obsession with true crime and suddenly find themselves wrapped up in one.</td><td>Streaming Source</td><td>Hulu</td></tr>
+                    <tr><th>Name</th><td>Only Murders in the Building (2021)</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -202,10 +218,10 @@
 
         <!-- START SHOW -->
         <div class="show-section">
-            <h3 id="show-2-toggle" tabindex="0" onclick="toggleSection('show-2')"><span class="toggle">+</span> High Potential (2024) [231803]</h3>
+            <h3 id="show-2-toggle" tabindex="0" onclick="toggleSection('show-2')"><span class="toggle">+</span> High Potential (2024) <span class="overview">Morgan is a single mom with an exceptional mind, whose unconventional knack for solving crimes leads to an unusual and unstoppable partnership with a by-the-book seasoned detective.</span> <span class="source">ABC</span></h3>
             <div id="show-2" class="hidden">
                 <table>
-                    <tr><th>Name</th><td>High Potential (2024) [231803]</td><td>Morgan is a single mom with an exceptional mind, whose unconventional knack for solving crimes leads to an unusual and unstoppable partnership with a by-the-book seasoned detective.</td><td>Streaming Source</td><td>ABC</td></tr>
+                    <tr><th>Name</th><td>High Potential (2024)</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -229,10 +245,10 @@
 
         <!-- START SHOW -->
         <div class="show-section">
-            <h3 id="show-3-toggle" tabindex="0" onclick="toggleSection('show-3')"><span class="toggle">+</span> The Diplomat (2023) [149668]</h3>
+            <h3 id="show-3-toggle" tabindex="0" onclick="toggleSection('show-3')"><span class="toggle">+</span> The Diplomat (2023) <span class="overview">In the midst of an international crisis, a career diplomat lands in a high-profile job she’s unsuited for, with tectonic implications for her marriage and her political future.</span> <span class="source">Netflix</span></h3>
             <div id="show-3" class="hidden">
                 <table>
-                    <tr><th>Name</th><td>The Diplomat (2023) [149668]</td><td>In the midst of an international crisis, a career diplomat lands in a high-profile job she’s unsuited for, with tectonic implications for her marriage and her political future.</td><td>Streaming Source</td><td>Netflix</td></tr>
+                    <tr><th>Name</th><td>The Diplomat (2023)</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -253,10 +269,10 @@
 
         <!-- START SHOW -->
         <div class="show-section">
-            <h3 id="show-4-toggle" tabindex="0" onclick="toggleSection('show-4')"><span class="toggle">+</span> English Teacher (2024) [236184]</h3>
+            <h3 id="show-4-toggle" tabindex="0" onclick="toggleSection('show-4')"><span class="toggle">+</span> English Teacher (2024) <span class="overview">A high school teacher in Austin tries to balance the competing demands of the students and their parents in a world where the rules seem to change every day.</span> <span class="source">Freevee</span></h3>
             <div id="show-4" class="hidden">
                 <table>
-                    <tr><th>Name</th><td>English Teacher (2024) [236184]</td><td>A high school teacher in Austin tries to balance the competing demands of the students and their parents in a world where the rules seem to change every day.</td><td>Streaming Source</td><td>Freevee</td></tr>
+                    <tr><th>Name</th><td>English Teacher (2024)</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -277,10 +293,10 @@
 
         <!-- START SHOW -->
         <div class="show-section">
-            <h3 id="show-5-toggle" tabindex="0" onclick="toggleSection('show-5')"><span class="toggle">+</span> RuPaul's Drag Race UK (2019) [95754]</h3>
+            <h3 id="show-5-toggle" tabindex="0" onclick="toggleSection('show-5')"><span class="toggle">+</span> RuPaul's Drag Race UK (2019) <span class="overview">RuPaul has made the trip across the pond in search of a queen with the most charisma, uniqueness, nerve and talent in all the land.</span> <span class="source">BBC iPlayer</span></h3>
             <div id="show-5" class="hidden">
                 <table>
-                    <tr><th>Name</th><td>RuPaul's Drag Race UK (2019) [95754]</td><td>RuPaul has made the trip across the pond in search of a queen with the most charisma, uniqueness, nerve and talent in all the land.</td><td>Streaming Source</td><td>BBC iPlayer</td></tr>
+                    <tr><th>Name</th><td>RuPaul's Drag Race UK (2019)</td></tr>
                 </table>
                 <!-- Seasons -->
                 <div class="season-section">
@@ -300,7 +316,7 @@
         <!-- END SHOW -->
 
         <!-- ADD NEW SHOW HERE -->
-        <!-- Copy the entire START SHOW to END SHOW block and paste here to add a new show. Update the show name, TMDB ID, overview, seasons, and episodes. Change the IDs (e.g., show-5, show-5-season-7) to unique values (e.g., show-6, show-6-season-1). -->
+        <!-- Copy the entire START SHOW to END SHOW block and paste here to add a new show. Update the show name, overview, seasons, and episodes. Change the IDs (e.g., show-5, show-5-season-7) to unique values (e.g., show-6, show-6-season-1). -->
     </div>
 
     <!-- Movies Section -->
@@ -455,7 +471,7 @@
     1. Open this file in a text editor (e.g., Notepad on Windows, TextEdit on Mac, or any code editor like VS Code).
     2. Scroll to the section you want to edit (Shows or Movies).
     3. Follow the comments labeled "ADD NEW SHOW HERE" or "ADD NEW MOVIE HERE" to add new entries.
-    4. To edit, replace the text within the existing entries (e.g., show name, TMDB ID, overview).
+    4. To edit, replace the text within the existing entries (e.g., show name, overview).
     5. To delete, remove the entire block for a show, season, episode, or movie (from the start comment to the end comment).
     6. Save the file and open it in a web browser on your Android TV to view changes.
 
@@ -463,7 +479,7 @@
     - The page has two main sections: Shows and Movies.
     - Shows are organized by Show > Seasons > Episodes.
     - Each section has a +/– toggle to show/hide details.
-    - Shows include: Name + Overview in one row + Streaming Source.
+    - Shows include: Name + Overview + Streaming Source in the title line.
     - Seasons include: Season Number, Year, Episode Count.
     - Episodes include: Episode Number, Name, Date, Runtime, Description, Streaming Source, VidSrc, Mapple, NunFlix, TBD.
     - Movies include: Name, Release Date, Runtime, Overview, Streaming Source, VidSrc, Mapple, NunFlix, TBD (all in one row).
@@ -471,7 +487,7 @@
     Adding a New Show:
     - Copy the entire block from <!-- START SHOW --> to <!-- END SHOW -->.
     - Paste it below the last show in the Shows section (before <!-- ADD NEW SHOW HERE -->).
-    - Update the show name, TMDB ID, overview, seasons, and episodes as needed.
+    - Update the show name, overview, streaming source, seasons, and episodes as needed.
     - Change the IDs (e.g., show-1, show-1-season-1) to unique values (e.g., show-6, show-6-season-1).
 
     Adding a New Season:
@@ -493,13 +509,13 @@
     - Ensure the ID (e.g., movie-conjuring) is unique.
 
     New Features:
-    - Streaming Source: Edit the cell for the primary platform (e.g., "Hulu", "Max", "N/A").
+    - Streaming Source: Edit the <span class="source"> tag in the title or episode/movie row (e.g., "Hulu", "Max", "N/A").
     - Watch Links: Replace "N/A" with URLs in VidSrc 📺, Mapple 🌐, NunFlix 🎬, and TBD ❓ columns (e.g., <a href="https://vidsrc.to/embed/tv/107113/s01e01">📺</a>). Use TMDB/IMDB IDs for embeds if applicable.
     - Buttons: Click ⏳ to mark watching, ✅ to mark watched, ❌ to unmark. States persist via localStorage.
 
     Tips:
     - Keep the HTML structure intact (don’t delete <div>, <table>, or other tags).
-    - Use TMDB (themoviedb.org) to find show/movie details like IDs and overviews.
+    - Use TMDB (themoviedb.org) to find show/movie details like overviews.
     - For missing details (e.g., TBD episodes), use "TBD" or "N/A" to avoid empty fields.
     - Test watch links externally before adding. Add unique IDs to new rows for status persistence.
     - Test changes in a browser to ensure the page looks correct.
