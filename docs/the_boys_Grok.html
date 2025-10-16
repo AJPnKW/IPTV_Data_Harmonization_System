@@ -151,66 +151,85 @@
         a:focus, .toggle:focus, h2:focus, h3:focus, .status-btn:focus {
             outline: 3px solid #ffeb3b;
         }
+        .app-button {
+            padding: 5px 10px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
     </style>
     <script defer>
+        // Base URLs
+        const baseTmdbTv = 'https://www.themoviedb.org/tv/';
+        const baseTmdbMovie = 'https://www.themoviedb.org/movie/';
+        const baseVidjoyTv = 'vidjoy.pro/embed/tv';
+        const baseVidjoyMovie = 'vidjoy.pro/embed/movie';
+        const baseVidsrcTv = 'vidsrc.net/embed/tv';
+        const baseVidsrcMovie = 'vidsrc.net/embed/movie';
+        const baseMappleTv = 'mapple.tv/watch/tv/';
+        const baseMappleMovie = 'mapple.tv/watch/movie';
+        const baseNunflixTv = 'nunflix.cc/watch/tv/';
+        const baseNunflixMovie = 'nunflix.cc/watch/movie/';
+
         // Hide/Show Toggle
         function toggleSection(id) {
             const section = document.getElementById(id);
-            const toggle = section.previousElementSibling.querySelector('.toggle');
-            if (section.classList.contains('hidden')) {
-                section.classList.remove('hidden');
-                toggle.textContent = '–';
-                section.previousElementSibling.setAttribute('aria-expanded', 'true');
+            if (section) {
+                const toggle = section.previousElementSibling.querySelector('.toggle');
+                if (section.classList.contains('hidden')) {
+                    section.classList.remove('hidden');
+                    toggle.textContent = '–';
+                    section.previousElementSibling.setAttribute('aria-expanded', 'true');
+                } else {
+                    section.classList.add('hidden');
+                    toggle.textContent = '+';
+                    section.previousElementSibling.setAttribute('aria-expanded', 'false');
+                }
             } else {
-                section.classList.add('hidden');
-                toggle.textContent = '+';
-                section.previousElementSibling.setAttribute('aria-expanded', 'false');
+                console.error('Section ID not found:', id);
             }
         }
 
         // Status Toggle (Watching/Watched)
         function toggleStatus(entryId, action) {
             const row = document.getElementById(entryId);
-            const currentState = row.dataset.status || 'none';
-            let newState = currentState;
-            const buttonsCell = row.querySelector('.status-buttons');
+            if (row) {
+                const currentState = row.dataset.status || 'none';
+                let newState = currentState;
+                const buttonsCell = row.querySelector('.status-buttons');
 
-            if (action === 'watching' && currentState !== 'watching') {
-                newState = 'watching';
-            } else if (action === 'watched' && currentState !== 'watched') {
-                newState = 'watched';
+                if (action === 'watching' && currentState !== 'watching') {
+                    newState = 'watching';
+                } else if (action === 'watched' && currentState !== 'watched') {
+                    newState = 'watched';
+                } else {
+                    newState = 'none'; // Unmark
+                }
+
+                row.dataset.status = newState;
+                row.className = newState; // Apply class for styling
+
+                // Update buttons with icons
+                buttonsCell.innerHTML = '';
+                if (newState === 'none') {
+                    buttonsCell.innerHTML += '<button class="status-btn" onclick="toggleStatus(\'' + entryId + '\', \'watching\')">⏳ Mark Watching</button>';
+                    buttonsCell.innerHTML += '<button class="status-btn" onclick="toggleStatus(\'' + entryId + '\', \'watched\')">✅ Mark Watched</button>';
+                } else if (newState === 'watching') {
+                    buttonsCell.innerHTML += '<button class="status-btn unmark" onclick="toggleStatus(\'' + entryId + '\', \'none\')">❌ Unmark</button>';
+                    buttonsCell.innerHTML += '<button class="status-btn watched" onclick="toggleStatus(\'' + entryId + '\', \'watched\')">✅ Mark Watched</button>';
+                } else if (newState === 'watched') {
+                    buttonsCell.innerHTML += '<button class="status-btn unmark" onclick="toggleStatus(\'' + entryId + '\', \'none\')">❌ Unmark</button>';
+                    buttonsCell.innerHTML += '<button class="status-btn watching" onclick="toggleStatus(\'' + entryId + '\', \'watching\')">⏳ Mark Watching</button>';
+                }
+
+                // Save to localStorage
+                localStorage.setItem('status-' + entryId, newState);
             } else {
-                newState = 'none'; // Unmark
+                console.error('Entry ID not found for status toggle:', entryId);
             }
-
-            row.dataset.status = newState;
-            row.className = newState; // Apply class for styling
-
-            // Update buttons with icons
-            buttonsCell.innerHTML = '';
-            if (newState === 'none') {
-                buttonsCell.innerHTML += '<button class="status-btn" onclick="toggleStatus(\'' + entryId + '\', \'watching\')">⏳ Mark Watching</button>';
-                buttonsCell.innerHTML += '<button class="status-btn" onclick="toggleStatus(\'' + entryId + '\', \'watched\')">✅ Mark Watched</button>';
-            } else if (newState === 'watching') {
-                buttonsCell.innerHTML += '<button class="status-btn unmark" onclick="toggleStatus(\'' + entryId + '\', \'none\')">❌ Unmark</button>';
-                buttonsCell.innerHTML += '<button class="status-btn watched" onclick="toggleStatus(\'' + entryId + '\', \'watched\')">✅ Mark Watched</button>';
-            } else if (newState === 'watched') {
-                buttonsCell.innerHTML += '<button class="status-btn unmark" onclick="toggleStatus(\'' + entryId + '\', \'none\')">❌ Unmark</button>';
-                buttonsCell.innerHTML += '<button class="status-btn watching" onclick="toggleStatus(\'' + entryId + '\', \'watching\')">⏳ Mark Watching</button>';
-            }
-
-            // Save to localStorage
-            localStorage.setItem('status-' + entryId, newState);
-
-            // Load on page load
-            window.addEventListener('load', function() {
-                document.querySelectorAll('[id^="episode-"], [id^="movie-"]').forEach(row => {
-                    const savedState = localStorage.getItem('status-' + row.id);
-                    if (savedState) {
-                        toggleStatus(row.id, savedState === 'none' ? 'none' : savedState);
-                    }
-                });
-            });
         }
 
         // Load and Parse Data from File
@@ -225,7 +244,8 @@
 
                     lines.forEach(line => {
                         line = line.trim();
-                        if (!line) return; // Skip empty lines
+                        if (!line || line.startsWith('#')) return; // Skip empty or header lines
+
                         if (line.startsWith('SHOWS') || line.startsWith('MOVIES')) {
                             currentSection = line;
                             if (currentSection === 'MOVIES') {
@@ -236,33 +256,42 @@
                             return;
                         }
 
-                        const [type, ...rest] = line.split('|');
+                        const [type, ...rest] = line.split('|').map(field => field.trim().replace(/\n/g, ' ')); // Trim and replace newlines
+
                         if (type === 'show') {
                             currentShow = rest;
-                            const [name, overview, date, status, source, schedule] = currentShow.map(field => field.replace(/\n/g, ' ').trim());
+                            const [tmdbId, name, overview, numSeasons, date, status, source, schedule, tmdbUrl] = currentShow;
                             const showDiv = document.createElement('div');
                             showDiv.className = 'show-section';
-                            showDiv.innerHTML = `<h3 class="show-title" id="show-${name.replace(/\(|\)| /g, '-')}-toggle" tabindex="0" onclick="toggleSection('show-${name.replace(/\(|\)| /g, '-')}')"><span class="toggle">+</span> ${name} <span class="overview">${overview}</span> <span class="source">${source}</span></h3><div id="show-${name.replace(/\(|\)| /g, '-]}" class="hidden"><div class="data-table"><div class="header-row"><div class="col">Name</div><div class="col">Date</div><div class="col">Status</div><div class="col">Source</div><div class="col">Schedule</div></div><div class="data-row show-row"><div class="col">${name}</div><div class="col">${date}</div><div class="col">${status}</div><div class="col">${source}</div><div class="col">${schedule}</div></div></div></div>`;
+                            showDiv.innerHTML = `<h3 class="show-title" id="show-${tmdbId}-toggle" tabindex="0" onclick="toggleSection('show-${tmdbId}')"><span class="toggle">+</span> ${name} <span class="overview">${overview}</span> <span class="source">${source}</span></h3><div id="show-${tmdbId}" class="hidden"><div class="data-table"><div class="header-row"><div class="col">Name</div><div class="col">Date</div><div class="col">Status</div><div class="col">Source</div><div class="col">Schedule</div></div><div class="data-row show-row"><div class="col">${name}</div><div class="col">${date}</div><div class="col">${status}</div><div class="col">${source}${source === 'Netflix' || source === 'Prime Video' ? `<button class="app-button" onclick="openApp('${source}', '${name}')">Open in App</button>` : ''}</div><div class="col">${schedule}</div></div></div></div>`;
                             document.getElementById('shows').querySelector('.data-table').appendChild(showDiv);
                         } else if (type === 'season' && currentShow) {
                             currentSeason = rest;
-                            const [seasonNum, year, overview, watchStatus] = currentSeason.map(field => field.replace(/\n/g, ' ').trim());
+                            const [tmdbId, seasonNum, year, overview, watchStatus] = currentSeason;
                             const seasonDiv = document.createElement('div');
                             seasonDiv.className = 'season-section';
-                            seasonDiv.innerHTML = `<h3 class="season-title" id="show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}-toggle" tabindex="0" onclick="toggleSection('show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}')"><span class="toggle">+</span> Season ${seasonNum} (${year}) • ${overview.split(' ').slice(0, 10).join(' ') + (overview.split(' ').length > 10 ? '...' : '')}</h3><div id="show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${seasonNum}" class="hidden"><div class="data-table"><div class="header-row"><div class="col">Episode</div><div class="col">Name</div><div class="col">Date</div><div class="col description">Description</div><div class="col">Runtime</div><div class="col">Streaming Source</div><div class="col">VidSrc 📺</div><div class="col">Mapple 🌐</div><div class="col">NunFlix 🎬</div><div class="col">TBD ❓</div></div></div></div>`;
-                            document.getElementById(`show-${currentShow[0].replace(/\(|\)| /g, '-')}`).querySelector('.data-table').appendChild(seasonDiv);
+                            seasonDiv.innerHTML = `<h3 class="season-title" id="show-${currentShow[0]}-season-${seasonNum}-toggle" tabindex="0" onclick="toggleSection('show-${currentShow[0]}-season-${seasonNum}')"><span class="toggle">+</span> Season ${seasonNum} (${year}) • ${overview}</h3><div id="show-${currentShow[0]}-season-${seasonNum}" class="hidden"><div class="data-table"><div class="header-row"><div class="col">Episode</div><div class="col">Name</div><div class="col">Date</div><div class="col description">Description</div><div class="col">Runtime</div><div class="col">Streaming Source</div><div class="col">VidSrc 📺</div><div class="col">Mapple 🌐</div><div class="col">NunFlix 🎬</div><div class="col">TBD ❓</div></div></div></div>`;
+                            document.getElementById(`show-${currentShow[0]}`).querySelector('.data-table').appendChild(seasonDiv);
                         } else if (type === 'episode' && currentSeason) {
-                            const [epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = rest.map(field => field.replace(/\n/g, ' ').trim());
+                            const [tmdbId, epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = rest;
                             const epDiv = document.createElement('div');
                             epDiv.className = `episode-row data-row ${watchStatus}`;
-                            epDiv.id = `episode-${currentShow[0].replace(/\(|\)| /g, '-')}-s${currentSeason[0]}-e${epNum}`;
-                            epDiv.innerHTML = `<div class="col">${epNum}</div><div class="col">${name}</div><div class="col">${date}</div><div class="col description">${desc}</div><div class="col">${runtime}</div><div class="col">${source}</div><div class="col">${vidSrc.startsWith('http') ? `<a href="${vidSrc}" class="watch-link" target="_blank">N/A</a>` : vidSrc}</div><div class="col">${mapple.startsWith('http') ? `<a href="${mapple}" class="watch-link" target="_blank">N/A</a>` : mapple}</div><div class="col">${nunFlix.startsWith('http') ? `<a href="${nunFlix}" class="watch-link" target="_blank">N/A</a>` : nunFlix}</div><div class="col">${tbd.startsWith('http') ? `<a href="${tbd}" class="watch-link" target="_blank">N/A</a>` : tbd}</div><div class="status-buttons"><button class="status-btn" onclick="toggleSection('episode-${currentShow[0].replace(/\(|\)| /g, '-')}-s${currentSeason[0]}-e${epNum}', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleSection('episode-${currentShow[0].replace(/\(|\)| /g, '-')}-s${currentSeason[0]}-e${epNum}', 'watched')">✅ Mark Watched</button></div>`;
-                            document.getElementById(`show-${currentShow[0].replace(/\(|\)| /g, '-')}-season-${currentSeason[0]}`).querySelector('.data-table').appendChild(epDiv);
+                            epDiv.id = `episode-${currentShow[0]}-s${currentSeason[1]}-e${epNum}`;
+                            const generatedVidSrc = vidSrc === 'N/A' ? baseVidsrcTv + '/' + currentShow[0] + '/' + currentSeason[1] + '/' + epNum : vidSrc;
+                            const generatedMapple = mapple === 'N/A' ? baseMappleTv + currentShow[0] + '/' + currentSeason[1] + '/' + epNum : mapple;
+                            const generatedNunFlix = nunFlix === 'N/A' ? baseNunflixTv + currentShow[0] + '/' + currentSeason[1] + '/' + epNum : nunFlix;
+                            const generatedTbd = tbd === 'N/A' ? 'N/A' : tbd; // Placeholder
+                            epDiv.innerHTML = `<div class="col">${epNum}</div><div class="col">${name}</div><div class="col">${date}</div><div class="col description">${desc}</div><div class="col">${runtime}</div><div class="col">${source}</div><div class="col"><a href="${generatedVidSrc}" class="watch-link" target="_blank">📺</a></div><div class="col"><a href="${generatedMapple}" class="watch-link" target="_blank">🌐</a></div><div class="col"><a href="${generatedNunFlix}" class="watch-link" target="_blank">🎬</a></div><div class="col"><a href="${generatedTbd}" class="watch-link" target="_blank">❓</a></div><div class="status-buttons"><button class="status-btn" onclick="toggleStatus('episode-${currentShow[0]}-s${currentSeason[1]}-e${epNum}', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('episode-${currentShow[0]}-s${currentSeason[1]}-e${epNum}', 'watched')">✅ Mark Watched</button></div>`;
+                            document.getElementById(`show-${currentShow[0]}-season-${currentSeason[1]}`).querySelector('.data-table').appendChild(epDiv);
                         } else if (type === 'movie') {
-                            const [name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = rest.map(field => field.replace(/\n/g, ' ').trim());
+                            const [tmdbId, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = rest;
                             const movieDiv = document.createElement('div');
-                            movieDiv.className = `movie-section`;
-                            movieDiv.innerHTML = `<div class="data-table"><div class="header-row"><div class="col">Name</div><div class="col">Release Date</div><div class="col">Runtime</div><div class="col description">Overview</div><div class="col">Streaming Source</div><div class="col">VidSrc 📺</div><div class="col">Mapple 🌐</div><div class="col">NunFlix 🎬</div><div class="col">TBD ❓</div></div><div id="movie-${name.replace(/\(|\)| /g, '-')}" class="movie-row data-row ${watchStatus}"><div class="col">${name}</div><div class="col">${releaseDate}</div><div class="col">${runtime}</div><div class="col description">${overview}</div><div class="col">${source}</div><div class="col">${vidSrc.startsWith('http') ? `<a href="${vidSrc}" class="watch-link" target="_blank">N/A</a>` : vidSrc}</div><div class="col">${mapple.startsWith('http') ? `<a href="${mapple}" class="watch-link" target="_blank">N/A</a>` : mapple}</div><div class="col">${nunFlix.startsWith('http') ? `<a href="${nunFlix}" class="watch-link" target="_blank">N/A</a>` : nunFlix}</div><div class="col">${tbd.startsWith('http') ? `<a href="${tbd}" class="watch-link" target="_blank">N/A</a>` : tbd}</div><div class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-${name.replace(/\(|\)| /g, '-')}', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-${name.replace(/\(|\)| /g, '-')}', 'watched')">✅ Mark Watched</button></div></div></div>`;
+                            movieDiv.className = 'movie-section';
+                            const generatedVidSrc = vidSrc === 'N/A' ? baseVidsrcMovie + '/' + tmdbId : vidSrc;
+                            const generatedMapple = mapple === 'N/A' ? baseMappleMovie + tmdbId : mapple;
+                            const generatedNunFlix = nunFlix === 'N/A' ? baseNunflixMovie + tmdbId : nunFlix;
+                            const generatedTbd = tbd === 'N/A' ? 'N/A' : tbd;
+                            movieDiv.innerHTML = `<div class="data-table"><div class="header-row"><div class="col">Name</div><div class="col">Release Date</div><div class="col">Runtime</div><div class="col description">Overview</div><div class="col">Streaming Source</div><div class="col">VidSrc 📺</div><div class="col">Mapple 🌐</div><div class="col">NunFlix 🎬</div><div class="col">TBD ❓</div></div><div id="movie-${tmdbId}" class="movie-row data-row ${watchStatus}"><div class="col">${name}</div><div class="col">${releaseDate}</div><div class="col">${runtime}</div><div class="col description">${overview}</div><div class="col">${source}${source === 'Netflix' || source === 'Prime Video' ? `<button class="app-button" onclick="openApp('${source}', '${name}')">Open in App</button>` : ''}</div><div class="col"><a href="${generatedVidSrc}" class="watch-link" target="_blank">📺</a></div><div class="col"><a href="${generatedMapple}" class="watch-link" target="_blank">🌐</a></div><div class="col"><a href="${generatedNunFlix}" class="watch-link" target="_blank">🎬</a></div><div class="col"><a href="${generatedTbd}" class="watch-link" target="_blank">❓</a></div><div class="status-buttons"><button class="status-btn" onclick="toggleStatus('movie-${tmdbId}', 'watching')">⏳ Mark Watching</button><button class="status-btn" onclick="toggleStatus('movie-${tmdbId}', 'watched')">✅ Mark Watched</button></div></div></div>`;
                             document.getElementById('movies').querySelector('.data-table').appendChild(movieDiv);
                         }
                     });
@@ -270,19 +299,21 @@
                 .catch(error => console.error('Error loading data:', error));
         }
 
+        // Open App Function
+        function openApp(source, name) {
+            let url;
+            if (source === 'Netflix') {
+                url = `https://www.netflix.com/search?q=${encodeURIComponent(name)}`;
+            } else if (source === 'Prime Video') {
+                url = `https://www.amazon.com/gp/search?index=video&keywords=${encodeURIComponent(name)}`;
+            }
+            if (url) {
+                window.open(url, '_blank');
+            }
+        }
+
         // Initialize on load
         window.addEventListener('load', loadData);
     </script>
-</head>
-<body>
-    <h1>The Boys Shows</h1>
-
-    <!-- Shows Section -->
-    <h2 id="shows-toggle" tabindex="0" onclick="toggleSection('shows')"><span class="toggle">+</span> Shows</h2>
-    <div id="shows" class="hidden"></div>
-
-    <!-- Movies Section -->
-    <h2 id="movies-toggle" tabindex="0" onclick="toggleSection('movies')"><span class="toggle">+</span> Movies</h2>
-    <div id="movies" class="hidden"></div>
 </body>
 </html>
