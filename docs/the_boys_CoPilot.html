@@ -48,92 +48,131 @@
 
 <h1>The Boys Shows</h1>
 
-<!-- ============================
-     SHOWS SECTION
-     ============================ -->
 <details open>
   <summary>+/- Shows</summary>
-
-  <!-- TV SHOW BLOCK -->
-  <details open>
-    <summary>Only Murders in the Building (2021) [107113]</summary>
-    <div class="season">Three strangers share an obsession with true crime and suddenly find themselves wrapped up in one.</div>
-
-    <!-- SEASON BLOCK -->
-    <details open>
-      <summary>Season 1 (2021) • 10 Episodes</summary>
-
-      <!-- EPISODE TABLE -->
-      <table class="episode">
-        <tr><th>#</th><th>Title</th><th>Date</th><th>Length</th><th>Description</th></tr>
-        <tr><td>1</td><td>True Crime</td><td>Aug 31, 2021</td><td>34m</td><td>Charles, Oliver & Mabel bond over true crime and investigate a death in their building.</td></tr>
-        <tr><td>2</td><td>Who Is Tim Kono?</td><td>Aug 31, 2021</td><td>30m</td><td>The group begins researching the victim. Mabel’s past starts to unravel.</td></tr>
-        <tr><td>3</td><td>How Well Do You Know Your Neighbors?</td><td>Aug 31, 2021</td><td>35m</td><td>Oliver uses his theater skills to analyze the case. Charles & Mabel question a cat lover.</td></tr>
-        <tr><td>4</td><td>The Sting</td><td>Sep 7, 2021</td><td>34m</td><td>The group seeks advice from a renowned podcast host to access a famous suspect.</td></tr>
-        <tr><td>5</td><td>Twist</td><td>Sep 14, 2021</td><td>26m</td><td>Mabel goes solo to track the victim’s final days. Charles & Oliver follow her.</td></tr>
-        <tr><td>6</td><td>To Protect and Serve</td><td>Sep 21, 2021</td><td>33m</td><td>Mabel brings friends to meet her mother. Detective Williams has doubts about the case.</td></tr>
-        <tr><td>7</td><td>The Boy from 6B</td><td>Sep 28, 2021</td><td>32m</td><td>A mysterious young man spies on the trio as old crimes resurface.</td></tr>
-        <tr><td>8</td><td>Fan Fiction</td><td>Oct 5, 2021</td><td>32m</td><td>The group calls in podcast Superfans to help with the investigation.</td></tr>
-        <tr><td>9</td><td>Double Time</td><td>Oct 12, 2021</td><td>32m</td><td>Residents revolt. Charles reconnects with an old colleague who sheds light on his past.</td></tr>
-        <tr><td>10</td><td>Open and Shut</td><td>Oct 19, 2021</td><td>36m</td><td>Season finale: the trio races toward a resolution while their lives are put in danger.</td></tr>
-      </table>
-    </details>
-
-    <!-- Add more seasons here -->
-  </details>
-
-  <!-- Add more shows below using same structure -->
+  <div id="shows"></div>
 </details>
 
-<!-- ============================
-     MOVIES SECTION
-     ============================ -->
 <details open>
   <summary>+/- Movies</summary>
-
-  <!-- MOVIE BLOCK -->
-  <div class="movie">
-    <strong>The Conjuring: Last Rites (2025)</strong><br>
-    Release Date: 2025-09-05<br>
-    Runtime: 2h 15m<br>
-    Overview: Paranormal investigators Ed and Lorraine Warren take on one last terrifying case involving mysterious entities.
-  </div>
-
-  <!-- Add more movies below using same structure -->
+  <div id="movies"></div>
 </details>
 
-<!-- ============================
-     USER INSTRUCTIONS
-     ============================ -->
+<script>
+const dataUrl = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/show%2Bmovie_data.tile.txt';
+
+async function loadData() {
+  const res = await fetch(dataUrl);
+  const text = await res.text();
+  const lines = text.split('\\n').filter(line => line.trim() && !line.trim().startsWith('#'));
+
+  const shows = {};
+  const movies = [];
+
+  let currentShow = null;
+  let currentSeason = null;
+
+  for (const line of lines) {
+    const parts = line.split('|');
+    const type = parts[0];
+
+    if (type === 'show') {
+      const [_, id, name, overview] = parts;
+      currentShow = { id, name, overview, seasons: [] };
+      shows[id] = currentShow;
+    }
+
+    if (type === 'season' && currentShow) {
+      const [_, showId, seasonNum, year, overview] = parts;
+      currentSeason = { seasonNum, year, overview, episodes: [] };
+      shows[showId].seasons.push(currentSeason);
+    }
+
+    if (type === 'episode' && currentSeason) {
+      const [_, showId, epNum, name, date, desc, runtime] = parts;
+      currentSeason.episodes.push({ epNum, name, date, desc, runtime });
+    }
+
+    if (type === 'movie') {
+      const [_, id, name, overview, releaseDate, rating, runtime] = parts;
+      movies.push({ id, name, overview, releaseDate, rating, runtime });
+    }
+  }
+
+  renderShows(shows);
+  renderMovies(movies);
+}
+
+function renderShows(shows) {
+  const container = document.getElementById('shows');
+  Object.values(shows).forEach(show => {
+    const showDetails = document.createElement('details');
+    showDetails.open = true;
+    const showSummary = document.createElement('summary');
+    showSummary.textContent = `${show.name}`;
+    showDetails.appendChild(showSummary);
+
+    const showDesc = document.createElement('div');
+    showDesc.className = 'season';
+    showDesc.textContent = show.overview;
+    showDetails.appendChild(showDesc);
+
+    show.seasons.forEach(season => {
+      const seasonDetails = document.createElement('details');
+      seasonDetails.open = true;
+      const seasonSummary = document.createElement('summary');
+      seasonSummary.textContent = `Season ${season.seasonNum} (${season.year}) • ${season.episodes.length} Episodes`;
+      seasonDetails.appendChild(seasonSummary);
+
+      const table = document.createElement('table');
+      const header = document.createElement('tr');
+      ['#', 'Title', 'Date', 'Length', 'Description'].forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        header.appendChild(th);
+      });
+      table.appendChild(header);
+
+      season.episodes.forEach(ep => {
+        const row = document.createElement('tr');
+        [ep.epNum, ep.name, ep.date, ep.runtime, ep.desc].forEach(val => {
+          const td = document.createElement('td');
+          td.textContent = val;
+          row.appendChild(td);
+        });
+        table.appendChild(row);
+      });
+
+      seasonDetails.appendChild(table);
+      showDetails.appendChild(seasonDetails);
+    });
+
+    container.appendChild(showDetails);
+  });
+}
+
+function renderMovies(movies) {
+  const container = document.getElementById('movies');
+  movies.forEach(movie => {
+    const div = document.createElement('div');
+    div.className = 'movie';
+    div.innerHTML = `<strong>${movie.name}</strong><br>
+      Release Date: ${movie.releaseDate}<br>
+      Runtime: ${movie.runtime}<br>
+      Overview: ${movie.overview}`;
+    container.appendChild(div);
+  });
+}
+
+loadData();
+</script>
+
 <!--
-  HOW TO EDIT THIS PAGE:
-
-  1. To ADD a new TV Show:
-     - Copy a <details> block under the SHOWS section.
-     - Replace the show name, year, TMDB ID, and overview.
-     - Add seasons and episodes using the same format.
-
-  2. To ADD a new Season:
-     - Inside a show block, copy a <details> block.
-     - Update season number, year, and episode count.
-     - Add episodes in the <table> using <tr> rows.
-
-  3. To ADD a new Movie:
-     - Copy a <div class="movie"> block under the MOVIES section.
-     - Replace title, release date, runtime, and overview.
-
-  4. To REMOVE a show, season, episode, or movie:
-     - Delete the corresponding <details>, <table>, or <div> block.
-
-  5. To MODIFY any content:
-     - Edit the text directly inside the HTML tags.
-
-  6. To VIEW on Android TV:
-     - Save this file as "index.html"
-     - Open it using a browser or file viewer app on your Android TV.
-
-  NOTE: This page is fully offline and does not fetch data from TMDB.
+  HOW TO EDIT:
+  - Edit the file "show+movie_data.tile.txt" in the /docs folder of your GitHub repo.
+  - Each line represents a show, season, episode, or movie.
+  - Lines starting with "#" are ignored.
+  - Save and refresh this HTML page to see updates.
 -->
-
 </body>
 </html>
