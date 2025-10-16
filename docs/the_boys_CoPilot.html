@@ -25,19 +25,17 @@
       font-weight: bold;
       color: #f0c000;
     }
-    .season, .episode, .movie {
-      margin-left: 20px;
-      margin-top: 5px;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
+      font-size: 0.9em;
     }
     th, td {
       border: 1px solid #555;
       padding: 6px;
       text-align: left;
+      vertical-align: top;
     }
     th {
       background-color: #333;
@@ -59,43 +57,42 @@
 </details>
 
 <script>
-const dataUrl = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/show%2Bmovie_data.tile.txt';
+const dataUrl = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/show_and_movie_data.tile.txt';
 
 async function loadData() {
   const res = await fetch(dataUrl);
   const text = await res.text();
-  const lines = text.split('\\n').filter(line => line.trim() && !line.trim().startsWith('#'));
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
 
   const shows = {};
   const movies = [];
-
   let currentShow = null;
   let currentSeason = null;
 
   for (const line of lines) {
-    const parts = line.split('|');
+    const parts = line.split('|').map(p => p.trim());
     const type = parts[0];
 
     if (type === 'show') {
-      const [_, id, name, overview] = parts;
-      currentShow = { id, name, overview, seasons: [] };
+      const [_, id, name, overview, date, status, source, schedule, url] = parts;
+      currentShow = { id, name, overview, date, status, source, schedule, url, seasons: [] };
       shows[id] = currentShow;
     }
 
     if (type === 'season' && currentShow) {
-      const [_, showId, seasonNum, year, overview] = parts;
-      currentSeason = { seasonNum, year, overview, episodes: [] };
+      const [_, showId, seasonNum, year, overview, watchStatus] = parts;
+      currentSeason = { seasonNum, year, overview, watchStatus, episodes: [] };
       shows[showId].seasons.push(currentSeason);
     }
 
     if (type === 'episode' && currentSeason) {
-      const [_, showId, epNum, name, date, desc, runtime] = parts;
-      currentSeason.episodes.push({ epNum, name, date, desc, runtime });
+      const [_, showId, epNum, title, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = parts;
+      currentSeason.episodes.push({ epNum, title, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
     }
 
     if (type === 'movie') {
-      const [_, id, name, overview, releaseDate, rating, runtime] = parts;
-      movies.push({ id, name, overview, releaseDate, rating, runtime });
+      const [_, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = parts;
+      movies.push({ id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
     }
   }
 
@@ -112,10 +109,19 @@ function renderShows(shows) {
     showSummary.textContent = `${show.name}`;
     showDetails.appendChild(showSummary);
 
-    const showDesc = document.createElement('div');
-    showDesc.className = 'season';
-    showDesc.textContent = show.overview;
-    showDetails.appendChild(showDesc);
+    const table = document.createElement('table');
+    const header = document.createElement('tr');
+    ['TMDB ID','Name','Overview','Date','Status','Source','Schedule','URL'].forEach(h => {
+      const th = document.createElement('th'); th.textContent = h; header.appendChild(th);
+    });
+    table.appendChild(header);
+
+    const row = document.createElement('tr');
+    [show.id, show.name, show.overview, show.date, show.status, show.source, show.schedule, show.url].forEach(val => {
+      const td = document.createElement('td'); td.textContent = val; row.appendChild(td);
+    });
+    table.appendChild(row);
+    showDetails.appendChild(table);
 
     show.seasons.forEach(season => {
       const seasonDetails = document.createElement('details');
@@ -124,26 +130,37 @@ function renderShows(shows) {
       seasonSummary.textContent = `Season ${season.seasonNum} (${season.year}) • ${season.episodes.length} Episodes`;
       seasonDetails.appendChild(seasonSummary);
 
-      const table = document.createElement('table');
-      const header = document.createElement('tr');
-      ['#', 'Title', 'Date', 'Length', 'Description'].forEach(h => {
-        const th = document.createElement('th');
-        th.textContent = h;
-        header.appendChild(th);
+      const seasonTable = document.createElement('table');
+      const sHeader = document.createElement('tr');
+      ['Season #','Year','Overview','Watch Status'].forEach(h => {
+        const th = document.createElement('th'); th.textContent = h; sHeader.appendChild(th);
       });
-      table.appendChild(header);
+      seasonTable.appendChild(sHeader);
+      const sRow = document.createElement('tr');
+      [season.seasonNum, season.year, season.overview, season.watchStatus].forEach(val => {
+        const td = document.createElement('td'); td.textContent = val; sRow.appendChild(td);
+      });
+      seasonTable.appendChild(sRow);
+      seasonDetails.appendChild(seasonTable);
 
-      season.episodes.forEach(ep => {
-        const row = document.createElement('tr');
-        [ep.epNum, ep.name, ep.date, ep.runtime, ep.desc].forEach(val => {
-          const td = document.createElement('td');
-          td.textContent = val;
-          row.appendChild(td);
+      if (season.episodes.length > 0) {
+        const epTable = document.createElement('table');
+        const eHeader = document.createElement('tr');
+        ['#','Title','Date','Description','Runtime','Source','vidSrc','mapple','nunFlix','tbd','Watch Status'].forEach(h => {
+          const th = document.createElement('th'); th.textContent = h; eHeader.appendChild(th);
         });
-        table.appendChild(row);
-      });
+        epTable.appendChild(eHeader);
 
-      seasonDetails.appendChild(table);
+        season.episodes.forEach(ep => {
+          const row = document.createElement('tr');
+          [ep.epNum, ep.title, ep.date, ep.desc, ep.runtime, ep.source, ep.vidSrc, ep.mapple, ep.nunFlix, ep.tbd, ep.watchStatus].forEach(val => {
+            const td = document.createElement('td'); td.textContent = val; row.appendChild(td);
+          });
+          epTable.appendChild(row);
+        });
+        seasonDetails.appendChild(epTable);
+      }
+
       showDetails.appendChild(seasonDetails);
     });
 
@@ -153,26 +170,26 @@ function renderShows(shows) {
 
 function renderMovies(movies) {
   const container = document.getElementById('movies');
-  movies.forEach(movie => {
-    const div = document.createElement('div');
-    div.className = 'movie';
-    div.innerHTML = `<strong>${movie.name}</strong><br>
-      Release Date: ${movie.releaseDate}<br>
-      Runtime: ${movie.runtime}<br>
-      Overview: ${movie.overview}`;
-    container.appendChild(div);
+  const table = document.createElement('table');
+  const header = document.createElement('tr');
+  ['TMDB ID','Name','Overview','Release Date','Rating','Runtime','Source','vidSrc','mapple','nunFlix','tbd','Watch Status'].forEach(h => {
+    const th = document.createElement('th'); th.textContent = h; header.appendChild(th);
   });
+  table.appendChild(header);
+
+  movies.forEach(movie => {
+    const row = document.createElement('tr');
+    [movie.id, movie.name, movie.overview, movie.releaseDate, movie.rating, movie.runtime, movie.source, movie.vidSrc, movie.mapple, movie.nunFlix, movie.tbd, movie.watchStatus].forEach(val => {
+      const td = document.createElement('td'); td.textContent = val; row.appendChild(td);
+    });
+    table.appendChild(row);
+  });
+
+  container.appendChild(table);
 }
 
 loadData();
 </script>
 
-<!--
-  HOW TO EDIT:
-  - Edit the file "show+movie_data.tile.txt" in the /docs folder of your GitHub repo.
-  - Each line represents a show, season, episode, or movie.
-  - Lines starting with "#" are ignored.
-  - Save and refresh this HTML page to see updates.
--->
 </body>
 </html>
