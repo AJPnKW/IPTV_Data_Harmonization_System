@@ -1,196 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>The Boys Shows • ChatGPT Edition</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The Boys Shows • ChatGPT Light UI</title>
 
 <!--
-  the_boys_ChatGPT.html
-  Purpose: Readable TV/desktop catalog with strong hierarchy, sticky headers, big touch targets,
-           keyboard/remote friendly, localStorage status, filters, accordions.
+  the_boys_ChatGPT.html  (Light/Teal UI)
+  Purpose: Readable catalog with show→season→episode accordions, responsive tables, high contrast, and persistent status.
   Data:    ./show_and_movie_data.tile.txt (same folder)
-  Version: 2025-10-16 21:10  |  Doc ID: TBS-UIX-1.2
+  Version: 2025-10-16  |  Doc ID: TBS-LITE-2.0
 -->
 
 <style>
   :root{
-    /* Dark theme with warm highlights for readability on TVs */
-    --bg: #0f1115;
-    --panel: #171a21;
-    --panel-2: #1d222c;
-    --border: #2a3140;
-    --muted: #9aa3b2;
-    --text: #e8ecf1;
-    --accent: #f6c65b;        /* headings */
-    --accent-2: #5ec7ff;      /* show title */
-    --ok: #53d769;            /* watched */
-    --info: #3aa8ff;          /* watching */
-    --danger: #ff5d5d;        /* unmark emphasis */
-    --chip: #2c3444;
-    --row-odd: #202632;
-    --row-even: #1b202a;
-    --focus: #ffdf6a;
+    /* Light theme inspired by your reference screenshot */
+    --page-bg: #f7f9fb;
+    --card-bg: #ffffff;
+    --row-even: #ffffff;
+    --row-odd:  #f3f6f8;
+    --border:   #d7dde6;
+    --text:     #1f2937;
+    --muted:    #5b6573;
+    --teal:     #1aa39a;  /* header strip */
+    --teal-dark:#16867f;
+    --teal-faint:#e3f4f3;
+    --link:     #0b6bcf;
+    --focus:    #ffd54f;
+    --ok:       #2e7d32;
+    --info:     #1976d2;
+    --danger:   #c62828;
   }
 
   html,body{
-    background:var(--bg);
+    background:var(--page-bg);
     color:var(--text);
     margin:0;
-    font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
   }
 
   .container{
-    max-width:1200px;
-    margin:24px auto 80px;
+    max-width:1280px;
+    margin:24px auto 64px;
     padding:0 16px;
   }
 
   header.app{
     text-align:center;
-    margin:8px 0 20px;
+    margin-bottom:12px;
   }
   .title{
-    color:var(--accent);
     font-weight:800;
-    letter-spacing:.5px;
-    font-size: clamp(20px, 2.6vw, 28px);
-    text-transform: none;
-    margin:0 0 6px;
+    letter-spacing:.2px;
+    font-size: clamp(22px, 2.4vw, 30px);
+    margin:0 0 8px;
   }
+
   .toolbar{
-    display:flex; gap:10px; flex-wrap:wrap;
-    justify-content:center;
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+    margin-bottom:6px;
   }
   .btn{
     appearance:none; border:1px solid var(--border);
-    background:var(--panel); color:var(--text);
-    padding:10px 14px; border-radius:10px; cursor:pointer;
-    font-weight:600;
+    background:var(--card-bg); color:var(--text);
+    padding:9px 14px; border-radius:10px; cursor:pointer;
+    font-weight:700;
   }
+  .btn.ticked{ border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-faint) inset; }
   .btn:focus{ outline:3px solid var(--focus); outline-offset:2px; }
-  .btn.ticked{ background:var(--panel-2); border-color:var(--accent); }
 
-  /* Section cards (Shows / Movies) */
+  /* Card sections -------------------------------------------------------- */
   .card{
-    background:var(--panel);
+    background:var(--card-bg);
     border:1px solid var(--border);
     border-radius:14px;
-    margin-top:18px;
     overflow:hidden;
+    box-shadow: 0 2px 10px rgba(16,24,40,0.05);
+    margin-top:16px;
   }
-
-  .card-header{
-    display:flex; align-items:center; gap:10px;
+  .card-strip{
+    background:var(--teal);
+    color:#fff;
     padding:12px 14px;
-    background:linear-gradient(180deg, var(--panel-2), var(--panel));
-    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:10px;
+    font-weight:800;
   }
   .chev{
     width:28px; height:28px; display:inline-grid; place-items:center;
-    border-radius:8px; background:var(--panel-2); border:1px solid var(--border);
-    color:var(--text); font-weight:700; cursor:pointer; user-select:none;
-  }
-  .card-title{
-    font-size:18px; font-weight:800; letter-spacing:.3px;
+    border-radius:6px; background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.35);
+    cursor:pointer; user-select:none;
+    font-weight:800;
   }
   .badge{
-    margin-left:auto;
-    background:var(--chip);
-    border:1px solid var(--border);
-    padding:4px 8px; border-radius:999px; color:var(--muted); font-weight:700;
-    font-size:12px;
+    margin-left:auto; background:rgba(255,255,255,.16);
+    padding:4px 10px; border-radius:999px; font-weight:700;
   }
-  .card-body{ padding:0; display:none; }
+  .card-body{ padding:8px 10px 12px; display:none; }
   .card.open .card-body{ display:block; }
 
-  /* Show block */
+  /* Show rows ------------------------------------------------------------- */
   .show{
-    border-top:1px solid var(--border);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    margin:10px 0;
+    background:var(--card-bg);
   }
-  .show-header{
-    display:flex; align-items:baseline; gap:10px;
-    padding:10px 14px; background:var(--panel-2);
-    border-bottom:1px dashed var(--border);
+  .show-head{
+    display:grid; grid-template-columns: 24px 1fr auto;
+    align-items:center; column-gap:10px;
+    padding:10px 12px;
+    background:#ecf6f5; /* faint teal */
+    border-bottom:1px solid var(--border);
     cursor:pointer;
   }
-  .show-name{ color:var(--accent-2); font-weight:800; }
-  .show-meta{ display:flex; gap:8px; flex-wrap:wrap; color:var(--muted); font-size:13px; }
+  .show-head .name{
+    font-weight:800; color:#0a4e4a;
+  }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
   .chip{
-    background:var(--chip); border:1px solid var(--border); padding:2px 8px; border-radius:999px;
+    background:#eef2f7; color:var(--muted);
+    border:1px solid var(--border);
+    padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700;
   }
+  .show-body{ display:none; padding: 8px 10px 12px; }
 
-  .show-body{ display:none; padding:0 0 8px; }
-  .show.open .show-body{ display:block; }
-
-  /* Season block */
+  /* Season blocks --------------------------------------------------------- */
   .season{
-    margin:10px 12px; border:1px solid var(--border); border-radius:12px; overflow:hidden;
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    margin:10px 4px;
+    background:var(--card-bg);
   }
-  .season-header{
-    display:flex; align-items:center; gap:10px;
-    padding:10px 12px; background:var(--panel-2); cursor:pointer;
-    border-bottom:1px solid var(--border);
+  .season-head{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 12px; background:#e7f1f0; border-bottom:1px solid var(--border);
+    cursor:pointer;
+    font-weight:800; color:#0c605a;
   }
-  .season-title{ font-weight:800; color:#86e29f; }
-  .season-desc{ color:var(--muted); font-size:13px; margin-left:auto; max-width:55%; text-align:right; }
+  .season-sub{ color:var(--muted); font-weight:600; margin-left:auto; font-size:13px; }
 
-  /* Table */
+  /* Tables --------------------------------------------------------------- */
   .table{
     width:100%;
     border-collapse:separate; border-spacing:0;
   }
   .thead{
-    position:sticky; top:0;
-    background:var(--panel-2);
-    z-index:2;
+    position:sticky; top:0; z-index:1;
+    background:#e2efee;
   }
-  .tr{ display:grid; grid-template-columns:60px 1.2fr 120px 80px 2fr 120px 88px 88px 88px 68px 210px; }
-  .th, .td{
+  /* Episodes grid columns (auto fill; description flexes) */
+  .row{
+    display:grid;
+    grid-template-columns: 64px 1.2fr 140px 100px minmax(220px,2fr) 140px 96px 96px 96px 70px 230px;
+    align-items:center;
+  }
+  .cell, .head{
     padding:10px 12px; border-bottom:1px solid var(--border);
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .td.wrap{ white-space:normal; }
-  .tbody .tr:nth-child(odd){ background:var(--row-odd); }
-  .tbody .tr:nth-child(even){ background:var(--row-even); }
+  .head{ font-weight:800; color:#0a4e4a; }
+  .cell.wrap{ white-space:normal; }
+  .tbody .row:nth-child(odd){ background:var(--row-odd); }
+  .tbody .row:nth-child(even){ background:var(--row-even); }
 
-  /* Movie table simpler */
-  .tr.movie{ grid-template-columns:1.5fr 120px 90px 2fr 150px 88px 88px 88px 68px 210px; }
-
-  /* Status */
-  .status-dot{
-    display:inline-block; width:10px; height:10px; border-radius:999px; margin-right:6px; vertical-align:middle;
-    background:#7b8496; border:1px solid var(--border);
+  /* Movies simpler */
+  .row.movie{
+    grid-template-columns: 1.6fr 140px 100px minmax(260px,2fr) 150px 96px 96px 96px 70px 230px;
   }
-  .is-watching .status-dot{ background:var(--info); }
-  .is-watched  .status-dot{ background:var(--ok); }
 
-  .btn-small{
-    border:1px solid var(--border); background:var(--panel-2);
-    border-radius:8px; padding:6px 8px; cursor:pointer; font-weight:700; font-size:13px;
+  /* Description truncation with “More” toggle */
+  .desc{
+    max-height: 1.6em; /* one line */
+    overflow:hidden; text-overflow:ellipsis;
   }
-  .btn-small.ok{ background:rgba(83,215,105,.12); }
-  .btn-small.info{ background:rgba(58,168,255,.12); }
-  .btn-small.danger{ background:rgba(255,93,93,.14); }
+  .desc.open{ max-height:none; white-space:normal; }
+  .more{
+    margin-left:8px; font-weight:800; color:var(--link); cursor:pointer;
+  }
+
+  /* Status buttons (high-contrast) */
+  .btn-mini{
+    border:1px solid var(--border);
+    background:#eef2f7;
+    color:#0f172a;
+    border-radius:8px; padding:6px 8px; cursor:pointer; font-weight:800; font-size:13px;
+    margin-right:6px;
+  }
+  .btn-mini.ok{    background:#e6f4ea; color:var(--ok); border-color:#b9e0c0; }
+  .btn-mini.info{  background:#e6f0fb; color:var(--info); border-color:#c7d5f5; }
+  .btn-mini.dang{  background:#fdeaea; color:var(--danger); border-color:#f3b8b8; }
+  .btn-mini:focus{ outline:3px solid var(--focus); outline-offset:2px; }
 
   a.link{
-    color:#d5e9ff; text-decoration:none; border-bottom:1px dotted #8fbef5;
+    color:var(--link);
+    text-decoration:none; border-bottom:1px dotted #9ec5ff;
   }
-  a.link:hover, .btn-small:focus, .show-header:focus, .season-header:focus, .chev:focus{ outline:3px solid var(--focus); outline-offset:2px; }
+  a.link:focus{ outline:3px solid var(--focus); outline-offset:2px; }
+  .status-dot{
+    width:10px; height:10px; border-radius:999px; background:#94a3b8; display:inline-block;
+    border:1px solid var(--border);
+  }
+  .is-watching .status-dot{ background:#64b5f6; }
+  .is-watched  .status-dot{ background:#81c784; }
 
-  /* Responsive fallback for narrow screens */
-  @media (max-width: 980px){
-    .tr{ grid-template-columns:46px 1.3fr 110px 72px 1.6fr 110px 76px 76px 76px 60px 180px; }
-    .season-desc{ display:none; }
+  /* Responsiveness */
+  @media (max-width: 1100px){
+    .row{ grid-template-columns: 56px 1.2fr 128px 90px minmax(180px,2fr) 130px 90px 90px 90px 64px 200px; }
+    .row.movie{ grid-template-columns: 1.3fr 125px 90px minmax(210px,2fr) 140px 90px 90px 90px 64px 200px; }
   }
-  @media (max-width: 720px){
-    .tr{ grid-template-columns:40px 1.2fr 108px 70px 1.2fr 108px 74px 74px 74px 56px 160px; }
+  @media (max-width: 860px){
+    .chips{ display:none; }
+    .row{ grid-template-columns: 48px 1.2fr 118px 80px minmax(160px,2fr) 110px 84px 84px 84px 60px 190px; }
+    .row.movie{ grid-template-columns: 1.1fr 115px 84px minmax(190px,2fr) 130px 84px 84px 84px 60px 190px; }
+  }
+  @media (max-width: 700px){
+    .row{ grid-template-columns: 44px 1fr 110px 76px minmax(150px,2fr) 0px 80px 80px 80px 56px 160px; }
+    .row .cell:nth-child(6){ display:none; } /* hide 'Source' on small screens to reduce width */
+    .row.movie{ grid-template-columns: 1fr 108px 76px minmax(180px,2fr) 0px 80px 80px 80px 56px 160px; }
+    .row.movie .cell:nth-child(5){ display:none; }
   }
 </style>
 </head>
 <body>
   <div class="container">
-    <header class="app" aria-label="page header">
+    <header class="app">
       <h1 class="title">The Boys Shows</h1>
       <div class="toolbar" role="toolbar" aria-label="filters and actions">
         <button class="btn" id="btnHideComplete" aria-pressed="false">Hide Complete</button>
@@ -202,34 +238,34 @@
     </header>
 
     <!-- Shows -->
-    <section class="card" id="cardShows" aria-label="Shows section">
-      <div class="card-header">
-        <button class="chev" data-accordion="#cardShows">▸</button>
-        <div class="card-title">Shows</div>
-        <div class="badge" id="showsCount">0</div>
+    <section class="card" id="cardShows">
+      <div class="card-strip">
+        <button class="chev" data-acc="#cardShows">▸</button>
+        Shows
+        <span class="badge" id="showsCount">0</span>
       </div>
       <div class="card-body" id="showsBody"></div>
     </section>
 
     <!-- Movies -->
-    <section class="card" id="cardMovies" aria-label="Movies section">
-      <div class="card-header">
-        <button class="chev" data-accordion="#cardMovies">▸</button>
-        <div class="card-title">Movies</div>
-        <div class="badge" id="moviesCount">0</div>
+    <section class="card" id="cardMovies">
+      <div class="card-strip">
+        <button class="chev" data-acc="#cardMovies">▸</button>
+        Movies
+        <span class="badge" id="moviesCount">0</span>
       </div>
       <div class="card-body" id="moviesBody"></div>
     </section>
 
-    <p id="err" style="color:#ff8b8b; margin-top:18px;"></p>
+    <p id="err" style="color:#b00020; margin-top:12px;"></p>
   </div>
 
 <script>
-/* -------------------- Config -------------------- */
+/* =================== Config =================== */
 const DATA_FILE = 'show_and_movie_data.tile.txt';
-const NS = 'ajp.uix';  // localStorage namespace
+const NS = 'ajp.lite';  // localStorage namespace
 
-/* Link builders */
+/* link builders */
 const L = {
   tmdbTv  : (id) => `https://www.themoviedb.org/tv/${encodeURIComponent(id)}`,
   tmdbMov : (id) => `https://www.themoviedb.org/movie/${encodeURIComponent(id)}`,
@@ -241,85 +277,71 @@ const L = {
   nunMov  : (id) => `https://nunflix.cc/watch/movie/${encodeURIComponent(id)}`
 };
 
-/* -------------------- Utilities -------------------- */
-const $ = (s, r=document) => r.querySelector(s);
-const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+/* =================== Utils ==================== */
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 const esc = (s)=> String(s ?? '')
   .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
-  .replaceAll('"','&quot;').replaceAll("'","&#39;");
+  .replaceAll('"','&quot;').replaceAll("'","&#39;');
 
 const key = (type,id,season,ep)=> [NS,type,id,season??'',ep??''].filter(Boolean).join('.');
-
-function setStatus(type,id,season,ep,status){
-  localStorage.setItem(key(type,id,season,ep), status);
-}
-function getStatus(type,id,season,ep){
-  return localStorage.getItem(key(type,id,season,ep)) || 'none';
-}
+function setStatus(type,id,s,e,val){ localStorage.setItem(key(type,id,s,e), val); }
+function getStatus(type,id,s,e){ return localStorage.getItem(key(type,id,s,e)) || 'none'; }
 
 function splitPipes(line){
-  // supports "quoted|chunks"
-  const out=[]; let cur='', q=false;
-  for (let i=0;i<line.length;i++){
+  // support "quoted|segments"
+  const out=[]; let cur='',q=false;
+  for(let i=0;i<line.length;i++){
     const ch=line[i];
     if(ch==='"'){ q=!q; continue; }
-    if(ch==='|' && !q){ out.push(cur); cur=''; }
-    else cur+=ch;
+    if(ch==='|' && !q){ out.push(cur); cur=''; } else cur+=ch;
   }
   out.push(cur);
   return out.map(s=>s.replace(/\\n/g,'\n').trim());
 }
 
-/* -------------------- Data Model -------------------- */
+/* =================== Parse ==================== */
 function parse(text){
-  const shows = new Map();   // id -> {meta,seasons: Map(num -> {episodes:[]})}
-  const movies = [];
-
-  let section=null;
-  let currentShow=null;
-  let lastSeason=null;
+  const shows=new Map(); const movies=[];
+  let section=null, currentShow=null, lastSeason=null;
 
   for(const raw of text.split(/\r?\n/)){
-    const line = raw.trim();
+    const line=raw.trim();
     if(!line || line.startsWith('#')) continue;
     if(line==='SHOWS'){ section='SHOWS'; continue; }
     if(line==='MOVIES'){ section='MOVIES'; continue; }
 
-    const f = splitPipes(line);
-    const type = (f[0]||'').toLowerCase();
+    const f=splitPipes(line);
+    const type=(f[0]||'').toLowerCase();
 
     if(type==='show'){
       // show|tmdb_id|name|overview|#_of_seasons|date|status|source|schedule|tmdb_url_link
       const [, id, name, overview, nSeasons, date, status, source, schedule, tmdb] = f;
       currentShow = { id, name, overview, nSeasons, date, status, source, schedule, tmdb: tmdb || L.tmdbTv(id), seasons:new Map() };
-      shows.set(id, currentShow);
-      lastSeason=null;
-    }
-    else if(type==='season' && currentShow){
+      shows.set(id,currentShow); lastSeason=null;
+    } else if(type==='season' && currentShow){
       // season|tmdb_id|seasonNum|year|overview|watchStatus
-      const [, showId, num, year, overview, watchStatus] = f;
-      if(showId !== currentShow.id) continue;
-      lastSeason = { num: String(num), year, overview, watchStatus, episodes:[] };
+      const [, sid, num, year, overview, watchStatus] = f;
+      if(sid!==currentShow.id) continue;
+      lastSeason={ num:String(num), year, overview, watchStatus, episodes:[] };
       currentShow.seasons.set(String(num), lastSeason);
-    }
-    else if(type==='episode' && currentShow && lastSeason){
+    } else if(type==='episode' && currentShow && lastSeason){
       // episode|tmdb_id|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
-      const [, showId, epNum, name, date, desc, runtime, source, vidSrc, mapple, nun, tbd, watchStatus] = f;
-      if(showId !== currentShow.id) continue;
+      const [, sid, epNum, name, date, desc, runtime, source, vidSrc, mapple, nun, tbd, watchStatus]=f;
+      if(sid!==currentShow.id) continue;
       lastSeason.episodes.push({
         epNum, name, date, desc, runtime, source,
         links:{
-          vids: (vidSrc && vidSrc!=='N/A') ? vidSrc : L.vidsTv(showId, lastSeason.num, epNum),
-          map : (mapple && mapple!=='N/A') ? mapple : L.mapTv(showId, lastSeason.num, epNum),
-          nun : (nun && nun!=='N/A') ? nun : L.nunTv(showId, lastSeason.num, epNum),
-          tbd : (tbd && tbd!=='N/A') ? tbd : null
+          vids:(vidSrc && vidSrc!=='N/A') ? vidSrc : L.vidsTv(sid, lastSeason.num, epNum),
+          map :(mapple && mapple!=='N/A') ? mapple : L.mapTv(sid, lastSeason.num, epNum),
+          nun :(nun && nun!=='N/A') ? nun : L.nunTv(sid, lastSeason.num, epNum),
+          tbd :(tbd && tbd!=='N/A') ? tbd : null
         },
         watchStatus
       });
-    }
-    else if(type==='movie'){
+    } else if(type==='movie'){
       // movie|tmdb_id|name|overview|releaseDate|rating|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
-      const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nun, tbd, watchStatus] = f;
+      const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nun, tbd, watchStatus]=f;
       movies.push({
         id, name, overview, releaseDate, rating, runtime, source,
         links:{
@@ -335,54 +357,54 @@ function parse(text){
   return {shows, movies};
 }
 
-/* -------------------- Render -------------------- */
+/* =================== Render =================== */
 function renderAll(model){
   renderShows(model);
   renderMovies(model);
+  restoreStates();
   applyFilters();
 }
 
+/* ---- Shows ---- */
 function renderShows({shows}){
-  const body = $('#showsBody');
-  body.innerHTML='';
-  const count = shows.size;
-  $('#showsCount').textContent = count;
+  const body = $('#showsBody'); body.innerHTML='';
+  $('#showsCount').textContent = shows.size;
 
   for(const show of shows.values()){
-    const showWrap = document.createElement('div');
-    showWrap.className='show';
-    const showOpenId = `show-${show.id}`;
-    showWrap.innerHTML = `
-      <div class="show-header" tabindex="0" data-toggle="#${showOpenId}">
-        <span class="status-dot"></span>
-        <span class="show-name">${esc(show.name)}</span>
-        <span class="show-meta">
+    const wrap = document.createElement('div');
+    wrap.className='show';
+
+    const showBodyId = `show-${show.id}`;
+    wrap.innerHTML = `
+      <div class="show-head" data-toggle="#${showBodyId}" tabindex="0" role="button" aria-expanded="false">
+        <span class="chev" aria-hidden="true">▸</span>
+        <div class="name">${esc(show.name)}</div>
+        <div class="chips">
           ${show.date ? `<span class="chip">${esc(show.date)}</span>`:''}
           ${show.status ? `<span class="chip">${esc(show.status)}</span>`:''}
           ${show.source ? `<span class="chip">${esc(show.source)}</span>`:''}
           ${show.schedule ? `<span class="chip">${esc(show.schedule)}</span>`:''}
           <a class="link" href="${show.tmdb}" target="_blank" rel="noopener">TMDB</a>
-        </span>
+        </div>
       </div>
-      <div class="show-body" id="${showOpenId}"></div>
+      <div class="show-body" id="${showBodyId}"></div>
     `;
-    body.appendChild(showWrap);
-
-    const host = showWrap.querySelector('.show-body');
+    body.appendChild(wrap);
 
     // seasons
+    const host = $('#'+showBodyId);
     const seasons = [...show.seasons.values()].sort((a,b)=>Number(a.num)-Number(b.num));
     for(const s of seasons){
-      const seasonId = `s-${show.id}-${s.num}`;
+      const seasonId = `tbl-${show.id}-${s.num}`;
       const season = document.createElement('div');
       season.className='season';
       season.innerHTML = `
-        <div class="season-header" tabindex="0" data-toggle="#tbl-${seasonId}">
+        <div class="season-head" data-toggle="#${seasonId}" tabindex="0" role="button" aria-expanded="false">
           <span class="chev" aria-hidden="true">▸</span>
-          <div class="season-title">Season ${esc(s.num)} ${s.year?`(${esc(s.year)})`:''}</div>
-          <div class="season-desc">${esc(s.overview || '')}</div>
+          <div>Season ${esc(s.num)} ${s.year?`(${esc(s.year)})`:''}</div>
+          <div class="season-sub">${esc(s.overview||'')}</div>
         </div>
-        <div class="season-body" id="tbl-${seasonId}" style="display:none;">
+        <div id="${seasonId}" style="display:none;">
           ${renderEpisodeTable(show.id, s)}
         </div>
       `;
@@ -392,109 +414,101 @@ function renderShows({shows}){
 }
 
 function renderEpisodeTable(showId, s){
-  const rows = s.episodes
-    .slice()
-    .sort((a,b)=>Number(a.epNum)-Number(b.epNum))
-    .map(ep=>{
-      const saved = getStatus('ep', showId, s.num, ep.epNum) || ep.watchStatus || 'none';
-      const stateCls = saved==='watched' ? 'is-watched' : (saved==='watching' ? 'is-watching' : '');
-      const rowId = `ep-${showId}-${s.num}-${ep.epNum}`;
-      const tbd = ep.links.tbd ? `<a class="link" href="${ep.links.tbd}" target="_blank" rel="noopener">❓</a>` : '—';
-      return `
-        <div class="tr ${stateCls}" id="${rowId}" data-type="ep" data-show="${showId}" data-season="${s.num}" data-ep="${ep.epNum}" data-status="${saved}">
-          <div class="td">#${esc(ep.epNum)}</div>
-          <div class="td">${esc(ep.name||'')}</div>
-          <div class="td">${esc(ep.date||'')}</div>
-          <div class="td">${esc(ep.runtime||'')}</div>
-          <div class="td wrap">${esc(ep.desc||'')}</div>
-          <div class="td">${esc(ep.source||'')}</div>
-          <div class="td"><a class="link" href="${ep.links.vids}" target="_blank" rel="noopener">📺 VidSrc</a></div>
-          <div class="td"><a class="link" href="${ep.links.map}"  target="_blank" rel="noopener">🌐 Mapple</a></div>
-          <div class="td"><a class="link" href="${ep.links.nun}"  target="_blank" rel="noopener">🎬 NunFlix</a></div>
-          <div class="td">${tbd}</div>
-          <div class="td">
-            ${btnRow(rowId, saved)}
-          </div>
+  const rows = s.episodes.slice().sort((a,b)=>Number(a.epNum)-Number(b.epNum)).map(ep=>{
+    const saved = getStatus('ep', showId, s.num, ep.epNum) || ep.watchStatus || 'none';
+    const cls = saved==='watched' ? 'is-watched' : (saved==='watching' ? 'is-watching' : '');
+    const rowId = `ep-${showId}-${s.num}-${ep.epNum}`;
+    const tbd = ep.links.tbd ? `<a class="link" href="${ep.links.tbd}" target="_blank" rel="noopener">❓</a>` : '—';
+
+    return `
+      <div class="row ${cls}" id="${rowId}" data-type="ep" data-show="${showId}" data-season="${s.num}" data-ep="${ep.epNum}" data-status="${saved}">
+        <div class="cell">#${esc(ep.epNum)}</div>
+        <div class="cell">${esc(ep.name||'')}</div>
+        <div class="cell">${esc(ep.date||'')}</div>
+        <div class="cell">${esc(ep.runtime||'')}</div>
+        <div class="cell">
+          <span class="desc">${esc(ep.desc||'')}</span>
+          <span class="more" data-more="${rowId}">More</span>
         </div>
-      `;
-    }).join('');
+        <div class="cell">${esc(ep.source||'')}</div>
+        <div class="cell"><a class="link" href="${ep.links.vids}" target="_blank" rel="noopener">📺 VidSrc</a></div>
+        <div class="cell"><a class="link" href="${ep.links.map}"  target="_blank" rel="noopener">🌐 Mapple</a></div>
+        <div class="cell"><a class="link" href="${ep.links.nun}"  target="_blank" rel="noopener">🎬 NunFlix</a></div>
+        <div class="cell">${tbd}</div>
+        <div class="cell">
+          ${btnSet(rowId, saved)}
+        </div>
+      </div>
+    `;
+  }).join('');
 
   return `
-    <div class="table" role="table" aria-label="Episode list">
-      <div class="thead tr" role="row">
-        <div class="th" role="columnheader">#</div>
-        <div class="th" role="columnheader">Title</div>
-        <div class="th" role="columnheader">Date</div>
-        <div class="th" role="columnheader">Length</div>
-        <div class="th" role="columnheader">Description</div>
-        <div class="th" role="columnheader">Source</div>
-        <div class="th" role="columnheader">VidSrc</div>
-        <div class="th" role="columnheader">Mapple</div>
-        <div class="th" role="columnheader">NunFlix</div>
-        <div class="th" role="columnheader">TBD</div>
-        <div class="th" role="columnheader">Status</div>
+    <div class="table" role="table" aria-label="Episodes">
+      <div class="thead row" role="row">
+        <div class="head" role="columnheader">#</div>
+        <div class="head" role="columnheader">Title</div>
+        <div class="head" role="columnheader">Date</div>
+        <div class="head" role="columnheader">Length</div>
+        <div class="head" role="columnheader">Description</div>
+        <div class="head" role="columnheader">Source</div>
+        <div class="head" role="columnheader">VidSrc</div>
+        <div class="head" role="columnheader">Mapple</div>
+        <div class="head" role="columnheader">NunFlix</div>
+        <div class="head" role="columnheader">TBD</div>
+        <div class="head" role="columnheader">Status</div>
       </div>
-      <div class="tbody">${rows}</div>
+      <div class="tbody">
+        ${rows}
+      </div>
     </div>
   `;
 }
 
-function btnRow(id, state){
+function btnSet(id, state){
   if(state==='watched'){
     return `
-      <button class="btn-small danger" data-action="none" data-target="${id}">❌ Unmark</button>
-      <button class="btn-small info"   data-action="watching" data-target="${id}">⏳ Watching</button>
+      <button class="btn-mini dang" data-action="none" data-target="${id}">❌ Unmark</button>
+      <button class="btn-mini info" data-action="watching" data-target="${id}">⏳ Watching</button>
     `;
-  }else if(state==='watching'){
+  } else if(state==='watching'){
     return `
-      <button class="btn-small ok"     data-action="watched"  data-target="${id}">✅ Watched</button>
-      <button class="btn-small danger" data-action="none"     data-target="${id}">❌ Unmark</button>
+      <button class="btn-mini ok" data-action="watched" data-target="${id}">✅ Watched</button>
+      <button class="btn-mini dang" data-action="none" data-target="${id}">❌ Unmark</button>
     `;
-  }else{
+  } else {
     return `
-      <button class="btn-small info"   data-action="watching" data-target="${id}">⏳ Watching</button>
-      <button class="btn-small ok"     data-action="watched"  data-target="${id}">✅ Watched</button>
+      <button class="btn-mini info" data-action="watching" data-target="${id}">⏳ Watching</button>
+      <button class="btn-mini ok" data-action="watched" data-target="${id}">✅ Watched</button>
     `;
   }
 }
 
+/* ---- Movies ---- */
 function renderMovies({movies}){
-  const body = $('#moviesBody');
-  body.innerHTML='';
+  const body=$('#moviesBody'); body.innerHTML='';
   $('#moviesCount').textContent = movies.length;
-
-  const header = `
-    <div class="thead tr movie" role="row">
-      <div class="th" role="columnheader">Title</div>
-      <div class="th" role="columnheader">Release</div>
-      <div class="th" role="columnheader">Length</div>
-      <div class="th" role="columnheader">Overview</div>
-      <div class="th" role="columnheader">Source</div>
-      <div class="th" role="columnheader">VidSrc</div>
-      <div class="th" role="columnheader">Mapple</div>
-      <div class="th" role="columnheader">NunFlix</div>
-      <div class="th" role="columnheader">TBD</div>
-      <div class="th" role="columnheader">Status</div>
-    </div>
-  `;
 
   const rows = movies.map(m=>{
     const saved = getStatus('movie', m.id) || m.watchStatus || 'none';
     const cls = saved==='watched' ? 'is-watched' : (saved==='watching' ? 'is-watching' : '');
     const id = `mov-${m.id}`;
     const tbd = m.links.tbd ? `<a class="link" href="${m.links.tbd}" target="_blank" rel="noopener">❓</a>` : '—';
+
     return `
-      <div class="tr movie ${cls}" id="${id}" data-type="movie" data-id="${m.id}" data-status="${saved}">
-        <div class="td"><a class="link" href="${L.tmdbMov(m.id)}" target="_blank" rel="noopener">${esc(m.name)}</a></div>
-        <div class="td">${esc(m.releaseDate||'')}</div>
-        <div class="td">${esc(m.runtime||'')}</div>
-        <div class="td wrap">${esc(m.overview||'')}</div>
-        <div class="td">${esc(m.source||'')}</div>
-        <div class="td"><a class="link" href="${m.links.vids}" target="_blank" rel="noopener">📺</a></div>
-        <div class="td"><a class="link" href="${m.links.map}"  target="_blank" rel="noopener">🌐</a></div>
-        <div class="td"><a class="link" href="${m.links.nun}"  target="_blank" rel="noopener">🎬</a></div>
-        <div class="td">${tbd}</div>
-        <div class="td">${btnRow(id, saved)}</div>
+      <div class="row movie ${cls}" id="${id}" data-type="movie" data-id="${m.id}" data-status="${saved}">
+        <div class="cell"><a class="link" href="${L.tmdbMov(m.id)}" target="_blank" rel="noopener">${esc(m.name)}</a></div>
+        <div class="cell">${esc(m.releaseDate||'')}</div>
+        <div class="cell">${esc(m.runtime||'')}</div>
+        <div class="cell">
+          <span class="desc">${esc(m.overview||'')}</span>
+          <span class="more" data-more="${id}">More</span>
+        </div>
+        <div class="cell">${esc(m.source||'')}</div>
+        <div class="cell"><a class="link" href="${m.links.vids}" target="_blank" rel="noopener">📺</a></div>
+        <div class="cell"><a class="link" href="${m.links.map}"  target="_blank" rel="noopener">🌐</a></div>
+        <div class="cell"><a class="link" href="${m.links.nun}"  target="_blank" rel="noopener">🎬</a></div>
+        <div class="cell">${tbd}</div>
+        <div class="cell">${btnSet(id, saved)}</div>
       </div>
     `;
   }).join('');
@@ -502,152 +516,177 @@ function renderMovies({movies}){
   const table = document.createElement('div');
   table.className='table';
   table.setAttribute('role','table');
-  table.innerHTML = header + `<div class="tbody">${rows}</div>`;
+  table.innerHTML = `
+    <div class="thead row">
+      <div class="head">Title</div>
+      <div class="head">Release</div>
+      <div class="head">Length</div>
+      <div class="head">Overview</div>
+      <div class="head">Source</div>
+      <div class="head">VidSrc</div>
+      <div class="head">Mapple</div>
+      <div class="head">NunFlix</div>
+      <div class="head">TBD</div>
+      <div class="head">Status</div>
+    </div>
+    <div class="tbody">${rows}</div>
+  `;
   body.appendChild(table);
 }
 
-/* -------------------- Interaction -------------------- */
-function toggleAccordion(sel){
-  const card = $(sel);
-  if(!card) return;
-  const body = card.querySelector('.card-body');
-  const btn  = card.querySelector('.chev');
+/* =================== Interactions =================== */
+function applyFilters(){
+  const hideComplete = $('#btnHideComplete').dataset.on==='1';
+  const watchingOnly = $('#btnWatchingOnly').dataset.on==='1';
+
+  $$('.row.movie, .tbody .row').forEach(r=>{
+    const st = r.dataset.status || 'none';
+    let show = true;
+    if(hideComplete && st==='watched') show=false;
+    if(watchingOnly && st!=='watching') show=false;
+    r.style.display = show ? 'grid' : 'none';
+  });
+  // hide season shells if all children hidden
+  $$('.season').forEach(season=>{
+    const tbl = season.querySelector('.tbody');
+    if(!tbl) return;
+    const any = $$('.row', tbl).some(r => r.style.display !== 'none');
+    season.style.display = any ? 'block' : 'none';
+  });
+}
+
+function restoreStates(){
+  // Reapply saved status to rows after first render
+  $$('.row[data-type="ep"], .row.movie').forEach(row=>{
+    const type=row.dataset.type;
+    let saved='none';
+    if(type==='ep') saved=getStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep);
+    else            saved=getStatus('movie', row.dataset.id);
+    if(saved && saved!=='none') setRowState(row, saved);
+  });
+}
+
+function setRowState(row, state){
+  row.dataset.status = state;
+  row.classList.toggle('is-watched',  state==='watched');
+  row.classList.toggle('is-watching', state==='watching');
+  const id=row.id;
+  const lastCell = row.lastElementChild;
+  if(lastCell) lastCell.innerHTML = btnSet(id, state);
+  if(row.dataset.type==='ep'){
+    setStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep, state);
+  }else{
+    setStatus('movie', row.dataset.id, null, null, state);
+  }
+}
+
+function toggleCard(sel){
+  const card=$(sel); if(!card) return;
+  const body=card.querySelector('.card-body');
   const open = !card.classList.contains('open');
   card.classList.toggle('open', open);
-  btn.textContent = open ? '▾' : '▸';
   body.style.display = open ? 'block' : 'none';
+  const btn = card.querySelector('.card-strip .chev');
+  if(btn) btn.textContent = open ? '▾' : '▸';
 }
 
-function applyFilters(){
-  const hideComplete = $('#btnHideComplete').dataset.on === '1';
-  const watchingOnly = $('#btnWatchingOnly').dataset.on === '1';
-
-  $$('.tr, .season').forEach(el=>{
-    // Episodes/Movies rows have data-status; seasons show if any child visible
-    if(el.classList.contains('season')){
-      const body = el.querySelector('.season-body');
-      if(!body) return;
-      const anyVisible = $$('.tr', body).some(r => r.style.display !== 'none');
-      el.style.display = anyVisible ? 'block' : 'none';
-      return;
-    }
-
-    const st = el.dataset.status || 'none';
-    let show = true;
-    if(hideComplete && st==='watched') show = false;
-    if(watchingOnly && st!=='watching') show = false;
-    el.style.display = show ? 'grid' : 'none';
-  });
-}
-
-function updateStatusRow(row, newState){
-  row.dataset.status = newState;
-  row.classList.toggle('is-watched',  newState==='watched');
-  row.classList.toggle('is-watching', newState==='watching');
-  const id = row.id;
-  const type = row.dataset.type;
-  if(type==='ep'){
-    setStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep, newState);
-  }else{
-    setStatus('movie', row.dataset.id, null, null, newState);
-  }
-  // refresh the button set
-  const td = row.querySelector('.td:last-child');
-  td.innerHTML = btnRow(id, newState);
-  applyFilters();
-}
-
-/* -------------------- Boot -------------------- */
+/* =================== Boot =================== */
 function init(){
-  // Section accordions
-  $$('#cardShows .chev, #cardMovies .chev').forEach(btn=>{
-    btn.addEventListener('click', e => toggleAccordion(e.currentTarget.dataset.accordion));
+  // Card accordions
+  $$('.card .card-strip .chev').forEach(b=>{
+    b.addEventListener('click', e => toggleCard(e.currentTarget.dataset.acc));
   });
+  // Open both by default
+  toggleCard('#cardShows'); toggleCard('#cardMovies');
 
-  // Default: open sections
-  toggleAccordion('#cardShows');
-  toggleAccordion('#cardMovies');
-
-  // Toolbar
-  $('#btnHideComplete').addEventListener('click', (e)=>{
-    const b=e.currentTarget; b.dataset.on = b.dataset.on==='1' ? '0' : '1';
+  // Toolbar toggles
+  $('#btnHideComplete').addEventListener('click', e=>{
+    const b=e.currentTarget; b.dataset.on = b.dataset.on==='1'?'0':'1';
     b.classList.toggle('ticked', b.dataset.on==='1');
     b.textContent = b.dataset.on==='1' ? 'Show Complete' : 'Hide Complete';
     applyFilters();
   });
-  $('#btnWatchingOnly').addEventListener('click', (e)=>{
-    const b=e.currentTarget; b.dataset.on = b.dataset.on==='1' ? '0' : '1';
+  $('#btnWatchingOnly').addEventListener('click', e=>{
+    const b=e.currentTarget; b.dataset.on = b.dataset.on==='1'?'0':'1';
     b.classList.toggle('ticked', b.dataset.on==='1');
     b.textContent = b.dataset.on==='1' ? 'Show All' : 'Watching Only';
     applyFilters();
   });
   $('#btnExpandAll').addEventListener('click', ()=>{
-    $$('.season-header').forEach(h=>{
+    $$('.season-head').forEach(h=>{
       const id = h.dataset.toggle;
       const body = $(id);
-      if(body && body.style.display==='none'){
-        body.style.display='block';
-        h.querySelector('.chev').textContent='▾';
-      }
+      if(body && body.style.display==='none'){ body.style.display='block'; h.querySelector('.chev').textContent='▾'; h.setAttribute('aria-expanded','true'); }
     });
   });
   $('#btnCollapseAll').addEventListener('click', ()=>{
-    $$('.season-header').forEach(h=>{
+    $$('.season-head').forEach(h=>{
       const id = h.dataset.toggle;
       const body = $(id);
-      if(body && body.style.display!=='none'){
-        body.style.display='none';
-        h.querySelector('.chev').textContent='▸';
-      }
+      if(body && body.style.display!=='none'){ body.style.display='none'; h.querySelector('.chev').textContent='▸'; h.setAttribute('aria-expanded','false'); }
     });
   });
   $('#btnReload').addEventListener('click', ()=> loadData(true));
 
-  // Delegation: show/season toggles; status buttons
+  // Delegated clicks (show/season/row actions)
   document.addEventListener('click', (e)=>{
-    const t = e.target;
+    const t=e.target;
 
-    // show toggle
-    const showHeader = t.closest('.show-header');
-    if(showHeader){
-      const id = showHeader.dataset.toggle;
-      const body = $(id);
-      const wrap = showHeader.parentElement;
-      const open = !wrap.classList.contains('open');
-      wrap.classList.toggle('open', open);
-      if(body) body.style.display = open ? 'block' : 'none';
+    // Show toggle
+    const showHead = t.closest('.show-head');
+    if(showHead){
+      const id = showHead.dataset.toggle;
+      const el = $(id);
+      const open = el && el.style.display!=='block';
+      if(el){ el.style.display = open ? 'block':'none'; }
+      const chev = showHead.querySelector('.chev'); if(chev) chev.textContent = open ? '▾':'▸';
+      showHead.setAttribute('aria-expanded', String(open));
       return;
     }
 
-    // season toggle
-    const seasonHeader = t.closest('.season-header');
-    if(seasonHeader){
-      const id = seasonHeader.dataset.toggle;
-      const body = $(id);
-      if(!body) return;
-      const opened = body.style.display !== 'none';
-      body.style.display = opened ? 'none' : 'block';
-      seasonHeader.querySelector('.chev').textContent = opened ? '▸' : '▾';
+    // Season toggle
+    const seasonHead = t.closest('.season-head');
+    if(seasonHead){
+      const id = seasonHead.dataset.toggle;
+      const el = $(id);
+      const open = el && el.style.display!=='block';
+      if(el){ el.style.display = open ? 'block':'none'; }
+      const chev = seasonHead.querySelector('.chev'); if(chev) chev.textContent = open ? '▾':'▸';
+      seasonHead.setAttribute('aria-expanded', String(open));
       return;
     }
 
-    // status buttons
+    // More/less for description
+    const more = t.closest('.more');
+    if(more){
+      const rid = more.dataset.more;
+      const row = document.getElementById(rid);
+      if(!row) return;
+      const d = row.querySelector('.desc');
+      if(!d) return;
+      const open = !d.classList.contains('open');
+      d.classList.toggle('open', open);
+      more.textContent = open ? 'Less' : 'More';
+      return;
+    }
+
+    // Status buttons
     const btn = t.closest('[data-action][data-target]');
     if(btn){
       const row = document.getElementById(btn.dataset.target);
       if(!row) return;
       const action = btn.dataset.action; // watching | watched | none
       const newState = action==='none' ? 'none' : action;
-      updateStatusRow(row, newState);
+      setRowState(row, newState);
       return;
     }
   });
 
-  // Keyboard: Enter toggles
+  // Keyboard toggle (Enter)
   document.addEventListener('keydown', (e)=>{
     if(e.key!=='Enter') return;
-    const sh = e.target.closest('.show-header');
-    const se = e.target.closest('.season-header');
+    const sh = e.target.closest('.show-head');
+    const se = e.target.closest('.season-head');
     if(sh) sh.click();
     if(se) se.click();
   });
@@ -659,23 +698,8 @@ function loadData(force){
   $('#err').textContent='';
   fetch(DATA_FILE, {cache: force?'reload':'no-store'})
     .then(r=>{ if(!r.ok) throw new Error('Failed to load data: '+r.status); return r.text(); })
-    .then(txt => {
-      const model = parse(txt);
-      renderAll(model);
-
-      // restore saved states
-      $$('[data-type="ep"], [data-type="movie"]').forEach(row=>{
-        const type=row.dataset.type;
-        let saved='none';
-        if(type==='ep') saved=getStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep);
-        else            saved=getStatus('movie', row.dataset.id);
-        if(saved && saved!=='none') updateStatusRow(row, saved);
-      });
-    })
-    .catch(err => {
-      console.error(err);
-      $('#err').textContent = 'Error: '+err.message+' — ensure the data file sits beside this HTML.';
-    });
+    .then(txt => { const model=parse(txt); renderAll(model); })
+    .catch(err => { console.error(err); $('#err').textContent = 'Error: '+err.message+' — ensure the data file sits beside this HTML.'; });
 }
 
 document.addEventListener('DOMContentLoaded', init);
