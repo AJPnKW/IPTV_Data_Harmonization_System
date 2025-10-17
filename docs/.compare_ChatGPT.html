@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The Boys Shows • Dark UI (TBS-DARK-3.1)</title>
+<!--
+  the_boys_ChatGPT.html
+  Dark, high-contrast UI with show→season→episode accordions.
+  Includes your CONFIG/parser/globals (DATA_URL, NS, keyFor/get/set, parseDataFile, toggleSection/Complete/Watched)
+  Version: 3.1  |  2025-10-16
+-->
+
+<style>
+  :root{
+    --bg: #121212;
+    --panel: #1b1b1b;
+    --panel2:#202020;
+
+    /* zebra bands */
+    --band-show:   #333333; /* shows */
+    --band-season: #444444; /* seasons */
+    --band-ep:     #555555; /* episodes/movies rows */
+
+    --border: #2b2b2b;
+    --text:   #f1f3f5;
+    --muted:  #b6bdc7;
+
+    /* hierarchy colors */
+    --showBlue:  #4ab0ff;
+    --seasonGreen:#7ad47a;
+
+    /* status */
+    --ok:#3ddc84;
+    --info:#4ab0ff;
+    --danger:#ff6b6b;
+
+    --chip:#2b2f36;
+    --focus:#ffe082;
+    --link:#a8d1ff;
+  }
+
+  html,body{ background:var(--bg); color:var(--text); margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial; }
+  .container{ max-width:1200px; margin:24px auto 72px; padding:0 16px; }
+
+  header.app{ text-align:center; margin-bottom:14px; }
+  h1.title{ margin:0 0 10px; font-size:clamp(22px,2.6vw,30px); font-weight:900; letter-spacing:.3px; }
+
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .btn{
+    appearance:none; border:1px solid var(--border); background:var(--panel2); color:var(--text);
+    padding:9px 14px; border-radius:10px; cursor:pointer; font-weight:800;
+  }
+  .btn.ticked{ box-shadow:0 0 0 2px rgba(74,176,255,.25) inset; border-color:#3a86c1; }
+  .btn:focus{ outline:3px solid var(--focus); outline-offset:2px; }
+
+  /* Sections (Shows/Movies) */
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-top:16px; }
+  .card-strip{
+    background:linear-gradient(180deg, #1e2a33, #1a232b);
+    color:#e9f5ff; padding:12px 14px; display:flex; align-items:center; gap:10px; font-weight:900;
+  }
+  .chev{
+    width:28px; height:28px; display:inline-grid; place-items:center;
+    border-radius:6px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.25);
+    cursor:pointer; user-select:none; font-weight:900;
+  }
+  .badge{ margin-left:auto; background:rgba(255,255,255,.08); padding:4px 10px; border-radius:999px; font-weight:800; }
+  .card-body{ padding:8px 10px 12px; display:none; }
+  .card.open .card-body{ display:block; }
+
+  /* Show block */
+  .show{ border:1px solid var(--border); border-radius:12px; overflow:hidden; margin:10px 0; background:var(--panel); }
+  .show-head{
+    display:grid; grid-template-columns:28px 1fr auto; gap:10px; align-items:center;
+    padding:10px 12px; background:var(--band-show); cursor:pointer; border-bottom:1px solid var(--border);
+  }
+  .show-head .name{ font-weight:900; color:var(--showBlue); }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .chip{ background:var(--chip); color:var(--muted); border:1px solid var(--border); padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; }
+  .show-body{ display:none; padding:10px; background:var(--panel2); }
+
+  /* Season block */
+  .season{ border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:10px 2px; background:var(--panel); }
+  .season-head{
+    display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--band-season);
+    cursor:pointer; border-bottom:1px solid var(--border); font-weight:900; color:var(--seasonGreen);
+  }
+  .season-sub{ margin-left:auto; color:var(--muted); font-weight:700; font-size:13px; }
+
+  /* Grid table */
+  .table{ width:100%; border-collapse:separate; border-spacing:0; }
+  .thead{ position:sticky; top:0; z-index:1; background:#2a2a2a; }
+  .row{
+    display:grid;
+    grid-template-columns: 64px 1.4fr 140px 100px minmax(260px,2fr) 140px 96px 96px 96px 74px 230px;
+    align-items:center;
+  }
+  .head,.cell{
+    padding:10px 12px; border-bottom:1px solid var(--border);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .head{ font-weight:900; color:#cfe8ff; }
+  .tbody .row:nth-child(odd){ background:var(--band-ep); }
+  .tbody .row:nth-child(even){ background:#4d4d4d; }
+
+  /* Movies grid simpler */
+  .row.movie{ grid-template-columns: 1.7fr 140px 100px minmax(300px,2fr) 150px 96px 96px 96px 74px 230px; }
+
+  /* Description truncation */
+  .desc{ max-height:1.6em; overflow:hidden; text-overflow:ellipsis; }
+  .desc.open{ max-height:none; white-space:normal; }
+  .more{ margin-left:8px; font-weight:900; color:var(--link); cursor:pointer; }
+
+  /* Buttons + icons */
+  .btn-mini{
+    border:1px solid var(--border); background:#2b2f36; color:#e8edf3; border-radius:8px;
+    padding:6px 8px; cursor:pointer; font-weight:900; font-size:13px; margin-right:6px;
+  }
+  .btn-mini.info{ background:rgba(74,176,255,.15); color:var(--info); }
+  .btn-mini.ok{   background:rgba(61,220,132,.15); color:var(--ok); }
+  .btn-mini.dang{ background:rgba(255,107,107,.15); color:var(--danger); }
+  .btn-mini:focus{ outline:3px solid var(--focus); outline-offset:2px; }
+
+  a.link{ color:var(--link); text-decoration:none; border-bottom:1px dotted #6fbaff; }
+  a.link:focus{ outline:3px solid var(--focus); outline-offset:2px; }
+
+  /* Filters via body classes */
+  body.hide-complete .status-watched{ display:none !important; }
+  body.watching-only .row:not(.status-watching){ display:none !important; }
+
+  @media (max-width:1100px){
+    .row{ grid-template-columns:58px 1.3fr 128px 90px minmax(220px,2fr) 130px 92px 92px 92px 68px 200px; }
+    .row.movie{ grid-template-columns:1.5fr 128px 90px minmax(260px,2fr) 140px 92px 92px 92px 68px 200px; }
+  }
+  @media (max-width:860px){
+    .chips{ display:none; }
+    .row{ grid-template-columns:52px 1.2fr 118px 84px minmax(200px,2fr) 120px 88px 88px 88px 64px 190px; }
+  }
+  @media (max-width:720px){
+    .row{ grid-template-columns:48px 1fr 110px 78px minmax(180px,2fr) 0px 84px 84px 84px 60px 170px; }
+    .row .cell:nth-child(6){ display:none; } /* hide 'Source' */
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header class="app">
+      <h1 class="title">The Boys Shows</h1>
+      <div class="toolbar" role="toolbar">
+        <button class="btn" id="btnHideComplete">Hide Complete</button>
+        <button class="btn" id="btnWatchingOnly">Watching Only</button>
+        <button class="btn" id="btnExpandAll">Expand All</button>
+        <button class="btn" id="btnCollapseAll">Collapse All</button>
+        <button class="btn" id="btnReload">Reload Data</button>
+      </div>
+    </header>
+
+    <!-- Shows -->
+    <section class="card" id="cardShows">
+      <div class="card-strip">
+        <button class="chev" data-acc="#cardShows">▸</button>
+        Shows
+        <span class="badge" id="showsCount">0</span>
+      </div>
+      <div class="card-body" id="shows-root"></div>
+    </section>
+
+    <!-- Movies -->
+    <section class="card" id="cardMovies">
+      <div class="card-strip">
+        <button class="chev" data-acc="#cardMovies">▸</button>
+        Movies
+        <span class="badge" id="moviesCount">0</span>
+      </div>
+      <div class="card-body" id="movies-root"></div>
+    </section>
+
+    <p id="error" style="color:#ff9e9e; margin-top:12px;"></p>
+  </div>
+
+<script>
+/* ---------- CONFIG ---------- */
+const DATA_URL = 'show_and_movie_data.tile.txt';  // same folder as HTML
+const NS       = 'ajp.watchstatus';               // localStorage namespace
+
+/* Base link builders (plus the extended baseline set) */
+const links = {
+  tmdbShow:   (id)        => `https://www.themoviedb.org/tv/${id}`,
+  tmdbMovie:  (id)        => `https://www.themoviedb.org/movie/${id}`,
+
+  /* VidJoy + VidSrc (prefer VidJoy first, fallback to VidSrc if needed) */
+  vidjoyTv:    (id,s,e)   => `https://vidjoy.pro/embed/tv/${id}/${s}/${e}`,
+  vidjoyMovie: (id)       => `https://vidjoy.pro/embed/movie/${id}`,
+  vidsrcTv:    (id,s,e)   => `https://vidsrc.net/embed/tv/${id}/${s}/${e}`,
+  vidsrcMovie: (id)       => `https://vidsrc.net/embed/movie/${id}`,
+
+  /* Mapple + NunFlix */
+  mappleTv:    (id,s,e)   => `https://mapple.tv/watch/tv/${id}/${s}/${e}`,
+  mappleMovie: (id)       => `https://mapple.tv/watch/movie/${id}`,
+  nunflixTv:   (id,s,e)   => `https://nunflix.cc/watch/tv/${id}/${s}/${e}`,
+  nunflixMovie:(id)       => `https://nunflix.cc/watch/movie/${id}`,
+
+  /* Generic search helpers (also used for Netflix/Prime search buttons) */
+  nunflix:    (q)         => `https://nunflix.com/search?q=${encodeURIComponent(q)}`,
+  mapple:     (q)         => `https://www.mapleflix.com/search?q=${encodeURIComponent(q)}`,
+  netflix:    (q)         => `https://www.netflix.com/search?q=${encodeURIComponent(q)}`,
+  prime:      (q)         => `https://www.primevideo.com/search/ref=atv_sr_sug_?phrase=${encodeURIComponent(q)}`
+};
+
+/* ---------- UTIL ---------- */
+const qs  = (s, r = document) => r.querySelector(s);
+const qsa = (s, r = document) => [...r.querySelectorAll(s)];
+const toInt = (x) => (x == null || x === '' ? null : parseInt(x, 10));
+
+function keyFor(type, tmdbId, seasonNum = null, epNum = null) {
+  let k = `${NS}.${type}.${tmdbId}`;
+  if (seasonNum != null) k += `.S${seasonNum}`;
+  if (epNum    != null) k += `.E${epNum}`;
+  return k;
+}
+function getStatus(type, tmdbId, seasonNum = null, epNum = null) {
+  return localStorage.getItem(keyFor(type, tmdbId, seasonNum, epNum)) || 'none';
+}
+function setStatus(type, tmdbId, seasonNum, epNum, status) {
+  localStorage.setItem(keyFor(type, tmdbId, seasonNum, epNum), status);
+}
+
+/* Robust fetch: local → site paths → RAW; ?data= override supported */
+async function fetchData(force=false){
+  const override = new URLSearchParams(location.search).get('data');
+  const baseDir  = location.href.substring(0, location.href.lastIndexOf('/')+1);
+  const RAW_URL  = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/' + DATA_URL;
+
+  const candidates = [
+    override,
+    DATA_URL,
+    baseDir + DATA_URL,
+    `/IPTV_Data_Harmonization_System/${DATA_URL}`,
+    `/IPTV_Data_Harmonization_System/docs/${DATA_URL}`,
+    RAW_URL
+  ].filter(Boolean);
+
+  const tried=[];
+  for (const url of [...new Set(candidates)]) {
+    try{
+      const r = await fetch(url, { cache: force ? 'reload' : 'no-store' });
+      tried.push(`${url} [${r.status}]`);
+      if (r.ok) {
+        const txt = await r.text();
+        if (txt && txt.trim()) return { text: txt, used: url, tried };
+      }
+    }catch(e){ tried.push(`${url} [ERR]`); }
+  }
+  return { text: null, used: null, tried };
+}
+
+/* ---------- PARSER ---------- */
+/* Handles:
+   - show|...
+   - season|tmdb_id|seasonNum|year|overview|watchStatus
+   - episode|tmdb_id|epNum|name|...   (legacy)
+   - episode|tmdb_id|seasonNum|epNum|name|...  (explicit season)
+   - movie|...
+   Ignores section labels: SHOWS / SEASONS / EPISODES / MOVIES
+*/
+function parseDataFile(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const shows = new Map();
+  const movies = [];
+
+  for (const raw of lines) {
+    if (raw.startsWith('#')) continue;
+    const upper = raw.toUpperCase();
+    if (upper === 'SHOWS' || upper === 'SEASONS' || upper === 'EPISODES' || upper === 'MOVIES') continue;
+
+    const f = splitPipes(raw);
+    const kind = (f[0] || '').toLowerCase();
+
+    if (kind === 'show') {
+      // show|tmdb_id|name|overview|#_of_seasons|date|status|source|schedule|tmdb_url_link
+      const [, id, name, overview, nSeasons, date, status, source, schedule, tmdbUrl] = f;
+      if (!id) continue;
+      if (!shows.has(id)) {
+        shows.set(id, {
+          id, name, overview, nSeasons: toInt(nSeasons), date, status, source, schedule, tmdbUrl,
+          seasons: new Map()
+        });
+      } else {
+        // merge minimal dup
+        const s = shows.get(id);
+        s.name = s.name || name; s.overview = s.overview || overview;
+      }
+
+    } else if (kind === 'season') {
+      // season|tmdb_id|seasonNum|year|overview|watchStatus
+      const [, showId, seasonNum, year, overview, watchStatus] = f;
+      const show = ensureShow(shows, showId);
+      if (!show) continue;
+      const key = String(seasonNum);
+      if (!show.seasons.has(key)) {
+        show.seasons.set(key, { showId, seasonNum: key, year, overview, watchStatus, episodes: [] });
+      } else {
+        const s = show.seasons.get(key);
+        s.year = s.year || year; s.overview = s.overview || overview; s.watchStatus = s.watchStatus || watchStatus;
+      }
+
+    } else if (kind === 'episode') {
+      /* Support both:
+         legacy:  episode|tmdb|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
+         explicit:episode|tmdb|seasonNum|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
+      */
+      const tmdb = f[1];
+      const show = ensureShow(shows, tmdb);
+      if (!show) continue;
+
+      let idx = 2;
+      let seasonNum, epNum;
+
+      // try to detect explicit season number
+      const maybeSeason = parseInt(f[2], 10);
+      const maybeEp = parseInt(f[3], 10);
+      const looksExplicit = Number.isInteger(maybeSeason) && Number.isInteger(maybeEp);
+
+      if (looksExplicit) {
+        seasonNum = String(maybeSeason);
+        epNum = String(maybeEp);
+        idx = 4;
+      } else {
+        // legacy: no seasonNum; try to use latest OR synthesize S1
+        epNum = String(f[2]);
+        const latest = pickLatestSeason(show);
+        seasonNum = latest ? latest.seasonNum : '1';
+        // ensure season exists
+        if (!show.seasons.has(seasonNum)) {
+          show.seasons.set(seasonNum, { showId: tmdb, seasonNum, year: '', overview: '', watchStatus: '', episodes: [] });
+        }
+        idx = 3;
+      }
+
+      const name    = f[idx++] || '';
+      const date    = f[idx++] || '';
+      const desc    = f[idx++] || '';
+      const runtime = f[idx++] || '';
+      const source  = f[idx++] || '';
+      const vidSrc  = f[idx++] || '';
+      const mapple  = f[idx++] || '';
+      const nunFlix = f[idx++] || '';
+      const tbd     = f[idx++] || '';
+      const watchStatus = f[idx++] || '';
+
+      const season = ensureSeason(show, seasonNum);
+      season.episodes.push({ showId: tmdb, epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
+
+    } else if (kind === 'movie') {
+      // movie|tmdb_id|name|overview|releaseDate|rating|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
+      const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = f;
+      movies.push({ id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
+    }
+  }
+  return { shows, movies };
+}
+
+function ensureShow(shows, id){
+  if (!id) return null;
+  if (!shows.has(id)) {
+    shows.set(id, { id, name:'', overview:'', nSeasons:null, date:'', status:'', source:'', schedule:'', tmdbUrl:'', seasons:new Map() });
+  }
+  return shows.get(id);
+}
+function ensureSeason(show, seasonNum){
+  const key = String(seasonNum);
+  if (!show.seasons.has(key)) {
+    show.seasons.set(key, { showId: show.id, seasonNum: key, year:'', overview:'', watchStatus:'', episodes:[] });
+  }
+  return show.seasons.get(key);
+}
+
+function splitPipes(line) {  // robust with "quoted|fields"
+  const out = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; continue; }
+    if (ch === '|' && !inQ) { out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur);
+  return out.map(s => s.replace(/\\n/g, '\n').trim());
+}
+function pickLatestSeason(show){
+  const nums=[...show.seasons.keys()].map(n=>parseInt(n,10)).filter(n=>!Number.isNaN(n));
+  if(!nums.length) return null;
+  const max=Math.max(...nums);
+  return show.seasons.get(String(max));
+}
+function esc(s){
+  return String(s ?? '')
+    .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+    .replaceAll('"','&quot;').replaceAll("'","&#39;");
+}
+
+/* ---------- RENDER ---------- */
+function renderAll({ shows, movies }) {
+  const showsRoot = qs('#shows-root');
+  const moviesRoot = qs('#movies-root');
+  showsRoot.innerHTML = '';
+  moviesRoot.innerHTML = '';
+
+  // SHOWS (collapsed by default; user can expand)
+  for (const show of shows.values()) {
+    showsRoot.appendChild(renderShow(show));
+  }
+
+  // MOVIES (header + rows)
+  qs('#moviesCount').textContent = String(movies.length);
+  if (movies.length) {
+    const head = document.createElement('div');
+    head.className = 'table';
+    head.innerHTML = `
+      <div class="thead row">
+        <div class="head">Title</div>
+        <div class="head">Release</div>
+        <div class="head">Length</div>
+        <div class="head">Overview</div>
+        <div class="head">Source</div>
+        <div class="head">VidJoy</div>
+        <div class="head">VidSrc</div>
+        <div class="head">Mapple</div>
+        <div class="head">NunFlix</div>
+        <div class="head">Status / Apps</div>
+      </div>`;
+    moviesRoot.appendChild(head);
+  }
+  for (const m of movies) moviesRoot.appendChild(renderMovie(m));
+
+  // Counts
+  qs('#showsCount').textContent  = String(shows.size);
+}
+
+function renderShow(show) {
+  const wrap = document.createElement('section');
+  wrap.className = 'show';
+  wrap.dataset.tmdbId = show.id;
+  const showBodyId = `show-${show.id}`;
+
+  wrap.innerHTML = `
+    <header class="show-head" onclick="toggleSection(this)" tabindex="0" role="button" aria-expanded="false">
+      <span class="chev">▸</span>
+      <div class="name">${esc(show.name)}</div>
+      <div class="chips">
+        ${show.date ? `<span class="chip">${esc(show.date)}</span>`:''}
+        ${show.status ? `<span class="chip">${esc(show.status)}</span>`:''}
+        ${show.source ? `<span class="chip">${esc(show.source)}</span>`:''}
+        ${show.schedule ? `<span class="chip">${esc(show.schedule)}</span>`:''}
+        <a class="link" href="${show.tmdbUrl || links.tmdbShow(show.id)}" target="_blank" rel="noopener">TMDB</a>
+      </div>
+    </header>
+    <div class="show-body body" id="${showBodyId}" style="display:none;">
+      <p class="overview" style="color:var(--muted);">${esc(show.overview || '')}</p>
+      <div class="seasons"></div>
+    </div>
+  `;
+
+  const seasonsRoot = qs('.seasons', wrap);
+  const seasonsSorted = [...show.seasons.values()].sort((a,b) => parseInt(a.seasonNum,10) - parseInt(b.seasonNum,10));
+  for (const s of seasonsSorted) {
+    seasonsRoot.appendChild(renderSeason(show, s));
+  }
+  return wrap;
+}
+
+function renderSeason(show, season) {
+  const el = document.createElement('article');
+  el.className = 'season';
+  el.dataset.season = season.seasonNum;
+  const seasonBodyId = `tbl-${show.id}-${season.seasonNum}`;
+
+  el.innerHTML = `
+    <header class="season-head" onclick="toggleSection(this)" tabindex="0" role="button" aria-expanded="false">
+      <span class="chev">▸</span>
+      <div>Season ${esc(season.seasonNum)} ${season.year?`(${esc(season.year)})`:''}</div>
+      <div class="season-sub">${esc(season.overview || '')}</div>
+    </header>
+    <div class="body" id="${seasonBodyId}" style="display:none;">
+      ${renderEpisodeTable(show.id, season)}
+    </div>
+  `;
+  return el;
+}
+
+function renderEpisodeTable(showId, season) {
+  const rows = [...season.episodes]
+    .sort((a,b) => parseInt(a.epNum,10) - parseInt(b.epNum,10))
+    .map(ep => renderEpisodeRow(showId, season.seasonNum, ep))
+    .join('');
+
+  return `
+    <div class="table" role="table" aria-label="Episodes">
+      <div class="thead row" role="row">
+        <div class="head">#</div>
+        <div class="head">Title</div>
+        <div class="head">Date</div>
+        <div class="head">Length</div>
+        <div class="head">Description</div>
+        <div class="head">Source</div>
+        <div class="head">VidJoy</div>
+        <div class="head">VidSrc</div>
+        <div class="head">Mapple</div>
+        <div class="head">NunFlix</div>
+        <div class="head">Status / Apps</div>
+      </div>
+      <div class="tbody">${rows}</div>
+    </div>
+  `;
+}
+
+function renderEpisodeRow(showId, seasonNum, ep) {
+  const status = getStatus('episode', showId, seasonNum, ep.epNum);
+  const id = `ep-${showId}-${seasonNum}-${ep.epNum}`;
+  const vidjoy = ep.vidSrc && /vidjoy/i.test(ep.vidSrc) ? ep.vidSrc : links.vidjoyTv(showId, seasonNum, ep.epNum);
+  const vidsrc = ep.vidSrc && /vidsrc/i.test(ep.vidSrc) ? ep.vidSrc : links.vidsrcTv(showId, seasonNum, ep.epNum);
+  const mapple = ep.mapple || links.mappleTv(showId, seasonNum, ep.epNum);
+  const nun    = ep.nunFlix || links.nunflixTv(showId, seasonNum, ep.epNum);
+
+  const netflix = links.netflix(`${ep.name} ${seasonNum}x${ep.epNum}`);
+  const prime   = links.prime(`${ep.name} ${seasonNum}x${ep.epNum}`);
+
+  return `
+    <div class="row episode-row status-${status}" id="${id}" data-tmdb-id="${showId}" data-season="${seasonNum}" data-ep="${ep.epNum}">
+      <div class="cell">E${esc(ep.epNum)}</div>
+      <div class="cell">${esc(ep.name || '')}</div>
+      <div class="cell">${esc(ep.date || '')}</div>
+      <div class="cell">${esc(ep.runtime || '')}</div>
+      <div class="cell">
+        <span class="desc">${esc(ep.desc || '')}</span>
+        <span class="more" data-more="${id}">More</span>
+      </div>
+      <div class="cell">${esc(ep.source || '')}</div>
+      <div class="cell"><a class="link" href="${vidjoy}" target="_blank" rel="noopener">📺 VidJoy</a></div>
+      <div class="cell"><a class="link" href="${vidsrc}" target="_blank" rel="noopener">📺 VidSrc</a></div>
+      <div class="cell"><a class="link" href="${mapple}" target="_blank" rel="noopener">🌐 Mapple</a></div>
+      <div class="cell"><a class="link" href="${nun}"    target="_blank" rel="noopener">🎬 NunFlix</a></div>
+      <div class="cell">
+        <button class="btn-mini info" data-action="watching" title="⏳ Watching">⏳</button>
+        <button class="btn-mini ok"   data-action="watched"  title="✅ Watched">✅</button>
+        <button class="btn-mini dang" data-action="none"     title="❌ Unmark">❌</button>
+        <a class="btn-mini" href="${netflix}" target="_blank" rel="noopener" title="Search Netflix">🅽</a>
+        <a class="btn-mini" href="${prime}"   target="_blank" rel="noopener" title="Search Prime">🅿</a>
+      </div>
+    </div>
+  `;
+}
+
+function renderMovie(m) {
+  const status = getStatus('movie', m.id, null, null);
+  const id = `mov-${m.id}`;
+
+  const vidjoy = m.vidSrc && /vidjoy/i.test(m.vidSrc) ? m.vidSrc : links.vidjoyMovie(m.id);
+  const vidsrc = m.vidSrc && /vidsrc/i.test(m.vidSrc) ? m.vidSrc : links.vidsrcMovie(m.id);
+  const mapple = m.mapple || links.mappleMovie(m.id);
+  const nun    = m.nunFlix || links.nunflixMovie(m.id);
+  const netflix = links.netflix(m.name);
+  const prime   = links.prime(m.name);
+
+  const row = document.createElement('div');
+  row.className = `row movie status-${status} movie-row`;
+  row.id = id;
+  row.dataset.tmdbId = m.id;
+
+  row.innerHTML = `
+    <div class="cell"><a class="link" href="${links.tmdbMovie(m.id)}" target="_blank" rel="noopener">${esc(m.name)}</a></div>
+    <div class="cell">${esc(m.releaseDate || '')}</div>
+    <div class="cell">${esc(m.runtime || '')}</div>
+    <div class="cell">
+      <span class="desc">${esc(m.overview || '')}</span>
+      <span class="more" data-more="${id}">More</span>
+    </div>
+    <div class="cell">${esc(m.source || '')}</div>
+    <div class="cell"><a class="link" href="${vidjoy}" target="_blank" rel="noopener">📺 VidJoy</a></div>
+    <div class="cell"><a class="link" href="${vidsrc}" target="_blank" rel="noopener">📺 VidSrc</a></div>
+    <div class="cell"><a class="link" href="${mapple}" target="_blank" rel="noopener">🌐 Mapple</a></div>
+    <div class="cell"><a class="link" href="${nun}"    target="_blank" rel="noopener">🎬 NunFlix</a></div>
+    <div class="cell">
+      <button class="btn-mini info" data-action="watching" title="⏳ Watching">⏳</button>
+      <button class="btn-mini ok"   data-action="watched"  title="✅ Watched">✅</button>
+      <button class="btn-mini dang" data-action="none"     title="❌ Unmark">❌</button>
+      <a class="btn-mini" href="${netflix}" target="_blank" rel="noopener" title="Search Netflix">🅽</a>
+      <a class="btn-mini" href="${prime}"   target="_blank" rel="noopener" title="Search Prime">🅿</a>
+    </div>
+  `;
+  return row;
+}
+
+/* ---------- GLOBAL TOGGLES (for inline onclick) ---------- */
+function toggle(targetEl) {
+  const isHeader = targetEl.classList.contains('show-head') || targetEl.classList.contains('season-head');
+  if (!isHeader) return;
+  const body = targetEl.nextElementSibling;
+  const chev = targetEl.querySelector('.chev');
+  const expanded = targetEl.getAttribute('aria-expanded') === 'true';
+  targetEl.setAttribute('aria-expanded', String(!expanded));
+  if (chev) chev.textContent = expanded ? '▸' : '▾';
+  if (body) body.style.display = expanded ? 'none' : '';
+}
+window.toggleSection = function (el) { toggle(el); };
+window.toggleComplete = function () { document.body.classList.toggle('hide-complete'); };
+window.toggleWatched  = function () { document.body.classList.toggle('watching-only'); };
+
+/* ---------- INIT + DELEGATED EVENTS ---------- */
+function init() {
+  // Card accordions collapsed by default
+  qsa('.card .card-strip .chev').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const card = qs(btn.dataset.acc);
+      const body = card.querySelector('.card-body');
+      const open = !card.classList.contains('open');
+      card.classList.toggle('open', open);
+      body.style.display = open ? 'block':'none';
+      btn.textContent = open ? '▾':'▸';
+    });
+  });
+
+  // Toolbar filters
+  qs('#btnHideComplete').addEventListener('click', e=>{
+    document.body.classList.toggle('hide-complete');
+    e.currentTarget.classList.toggle('ticked');
+    e.currentTarget.textContent = document.body.classList.contains('hide-complete') ? 'Show Complete' : 'Hide Complete';
+  });
+  qs('#btnWatchingOnly').addEventListener('click', e=>{
+    document.body.classList.toggle('watching-only');
+    e.currentTarget.classList.toggle('ticked');
+    e.currentTarget.textContent = document.body.classList.contains('watching-only') ? 'Show All' : 'Watching Only';
+  });
+  qs('#btnExpandAll').addEventListener('click', ()=>{
+    qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='true')  toggle(h); });
+    qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='true') toggle(h); });
+  });
+  qs('#btnCollapseAll').addEventListener('click', ()=>{
+    qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false') toggle(h); });
+    qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false')  toggle(h); });
+  });
+  qs('#btnReload').addEventListener('click', ()=> load(true));
+
+  // Delegated clicks: status + More/Less
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-action]');
+    if(btn){
+      const row = e.target.closest('.episode-row, .movie-row');
+      if(!row) return;
+      const action = btn.dataset.action; // watching | watched | none
+      if(row.classList.contains('episode-row')){
+        const id = row.dataset.tmdbId, s = parseInt(row.dataset.season,10), ep = parseInt(row.dataset.ep,10);
+        setStatus('episode', id, s, ep, action);
+      }else{
+        const id = row.dataset.tmdbId;
+        setStatus('movie', id, null, null, action);
+      }
+      row.classList.remove('status-watching','status-watched','status-none');
+      row.classList.add(`status-${action}`);
+      return;
+    }
+
+    const more = e.target.closest('.more');
+    if(more){
+      const row = qs('#'+more.dataset.more);
+      const desc = row?.querySelector('.desc');
+      if(desc){
+        const open = !desc.classList.contains('open');
+        desc.classList.toggle('open', open);
+        more.textContent = open ? 'Less' : 'More';
+      }
+      return;
+    }
+  });
+
+  load(false);
+}
+
+async function load(force){
+  const err = qs('#error'); err.textContent='';
+  const {text, tried} = await fetchData(force);
+  if(!text){
+    err.innerHTML = 'Could not load data file.<br><pre style="white-space:pre-wrap;background:#1a1a1a;border:1px solid #333;padding:8px;border-radius:8px;color:#ddd;">'
+      + (tried||[]).join('\n') + '</pre>'
+      + 'Tip: keep the txt next to this HTML in /docs, or pass <code>?data=</code> with a RAW URL.';
+    qs('#shows-root').innerHTML=''; qs('#movies-root').innerHTML='';
+    qs('#showsCount').textContent='0'; qs('#moviesCount').textContent='0';
+    return;
+  }
+  try{
+    const model = parseDataFile(text);
+    renderAll(model);
+  }catch(e){
+    console.error(e);
+    err.textContent = 'Parse error: '+e.message;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
