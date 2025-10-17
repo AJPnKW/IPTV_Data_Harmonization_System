@@ -3,139 +3,147 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>The Boys Shows • ChatGPT Light UI (TBS-LITE-2.1)</title>
+<title>The Boys Shows • Dark UI (TBS-DARK-3.0)</title>
 
 <!--
-  the_boys_ChatGPT.html  (Light/Teal UI, robust loader)
-  Purpose: Readable catalog with show→season→episode accordions, responsive tables, high contrast, and persistent status.
-  Data:    ./show_and_movie_data.tile.txt (same folder) OR ?data=<absolute/relative URL>
-  Version: 2025-10-16  |  Doc ID: TBS-LITE-2.1
+  the_boys_ChatGPT.html
+  Dark, high-contrast UI with show→season→episode accordions.
+  Strictly includes your CONFIG/parser/globals (DATA_URL, NS, keyFor, get/set, parseDataFile, toggleSection/Complete/Watched).
+  Version: 3.0  |  2025-10-16
 -->
 
 <style>
   :root{
-    --page-bg: #f7f9fb;
-    --card-bg: #ffffff;
-    --row-even: #ffffff;
-    --row-odd:  #f3f6f8;
-    --border:   #d7dde6;
-    --text:     #1f2937;
-    --muted:    #5b6573;
-    --teal:     #1aa39a;
-    --teal-dark:#16867f;
-    --teal-faint:#e3f4f3;
-    --link:     #0b6bcf;
-    --focus:    #ffd54f;
-    --ok:       #2e7d32;
-    --info:     #1976d2;
-    --danger:   #c62828;
+    /* Dark palette + requested hierarchy */
+    --bg: #121212;
+    --panel: #1b1b1b;
+    --panel2:#202020;
+
+    /* zebra bands for blocks (requested) */
+    --band-show:   #333333; /* shows */
+    --band-season: #444444; /* seasons */
+    --band-ep:     #555555; /* episodes/movies rows */
+
+    --border: #2b2b2b;
+    --text:   #f1f3f5;
+    --muted:  #b6bdc7;
+
+    /* hierarchy colors */
+    --showBlue:  #4ab0ff;
+    --seasonGreen:#7ad47a;
+
+    /* status */
+    --ok:#3ddc84;
+    --info:#4ab0ff;
+    --danger:#ff6b6b;
+
+    --chip:#2b2f36;
+    --focus:#ffe082;
+    --link:#a8d1ff;
   }
 
-  html,body{
-    background:var(--page-bg);
-    color:var(--text);
-    margin:0;
-    font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
-  }
+  html,body{ background:var(--bg); color:var(--text); margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial; }
+  .container{ max-width:1200px; margin:24px auto 72px; padding:0 16px; }
 
-  .container{ max-width:1280px; margin:24px auto 64px; padding:0 16px; }
-  header.app{ text-align:center; margin-bottom:12px; }
-  .title{ font-weight:800; letter-spacing:.2px; font-size: clamp(22px, 2.4vw, 30px); margin:0 0 8px; }
+  header.app{ text-align:center; margin-bottom:14px; }
+  h1.title{ margin:0 0 10px; font-size:clamp(22px,2.6vw,30px); font-weight:900; letter-spacing:.3px; }
 
-  .toolbar{
-    display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:6px;
-  }
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
   .btn{
-    appearance:none; border:1px solid var(--border);
-    background:var(--card-bg); color:var(--text);
-    padding:9px 14px; border-radius:10px; cursor:pointer; font-weight:700;
+    appearance:none; border:1px solid var(--border); background:var(--panel2); color:var(--text);
+    padding:9px 14px; border-radius:10px; cursor:pointer; font-weight:800;
   }
-  .btn.ticked{ border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-faint) inset; }
+  .btn.ticked{ box-shadow:0 0 0 2px rgba(74,176,255,.25) inset; border-color:#3a86c1; }
   .btn:focus{ outline:3px solid var(--focus); outline-offset:2px; }
 
-  .card{
-    background:var(--card-bg); border:1px solid var(--border);
-    border-radius:14px; overflow:hidden; box-shadow: 0 2px 10px rgba(16,24,40,0.05); margin-top:16px;
-  }
+  /* Sections (Shows/Movies) */
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-top:16px; }
   .card-strip{
-    background:var(--teal); color:#fff; padding:12px 14px;
-    display:flex; align-items:center; gap:10px; font-weight:800;
+    background:linear-gradient(180deg, #1e2a33, #1a232b);
+    color:#e9f5ff; padding:12px 14px; display:flex; align-items:center; gap:10px; font-weight:900;
   }
   .chev{
     width:28px; height:28px; display:inline-grid; place-items:center;
-    border-radius:6px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.35);
-    cursor:pointer; user-select:none; font-weight:800;
+    border-radius:6px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.25);
+    cursor:pointer; user-select:none; font-weight:900;
   }
-  .badge{ margin-left:auto; background:rgba(255,255,255,.16); padding:4px 10px; border-radius:999px; font-weight:700; }
+  .badge{ margin-left:auto; background:rgba(255,255,255,.08); padding:4px 10px; border-radius:999px; font-weight:800; }
   .card-body{ padding:8px 10px 12px; display:none; }
   .card.open .card-body{ display:block; }
 
-  .show{ border:1px solid var(--border); border-radius:12px; overflow:hidden; margin:10px 0; background:var(--card-bg); }
+  /* Show block */
+  .show{ border:1px solid var(--border); border-radius:12px; overflow:hidden; margin:10px 0; background:var(--panel); }
   .show-head{
-    display:grid; grid-template-columns: 24px 1fr auto; align-items:center; column-gap:10px;
-    padding:10px 12px; background:#ecf6f5; border-bottom:1px solid var(--border); cursor:pointer;
+    display:grid; grid-template-columns:28px 1fr auto; gap:10px; align-items:center;
+    padding:10px 12px; background:var(--band-show); cursor:pointer; border-bottom:1px solid var(--border);
   }
-  .show-head .name{ font-weight:800; color:#0a4e4a; }
+  .show-head .name{ font-weight:900; color:var(--showBlue); }
   .chips{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-  .chip{ background:#eef2f7; color:var(--muted); border:1px solid var(--border); padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; }
-  .show-body{ display:none; padding: 8px 10px 12px; }
+  .chip{ background:var(--chip); color:var(--muted); border:1px solid var(--border); padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; }
+  .show-body{ display:none; padding:10px; background:var(--panel2); }
 
-  .season{ border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:10px 4px; background:var(--card-bg); }
+  /* Season block */
+  .season{ border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:10px 2px; background:var(--panel); }
   .season-head{
-    display:flex; align-items:center; gap:12px; padding:10px 12px; background:#e7f1f0; border-bottom:1px solid var(--border);
-    cursor:pointer; font-weight:800; color:#0c605a;
+    display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--band-season);
+    cursor:pointer; border-bottom:1px solid var(--border); font-weight:900; color:var(--seasonGreen);
   }
-  .season-sub{ color:var(--muted); font-weight:600; margin-left:auto; font-size:13px; }
+  .season-sub{ margin-left:auto; color:var(--muted); font-weight:700; font-size:13px; }
 
+  /* Grid table */
   .table{ width:100%; border-collapse:separate; border-spacing:0; }
-  .thead{ position:sticky; top:0; z-index:1; background:#e2efee; }
-
+  .thead{ position:sticky; top:0; z-index:1; background:#2a2a2a; }
   .row{
     display:grid;
-    grid-template-columns: 64px 1.2fr 140px 100px minmax(220px,2fr) 140px 96px 96px 96px 70px 230px;
+    /* responsive: description grows, no horizontal scroll on TVs */
+    grid-template-columns: 64px 1.4fr 140px 100px minmax(260px,2fr) 140px 96px 96px 96px 74px 230px;
     align-items:center;
   }
-  .cell,.head{ padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .head{ font-weight:800; color:#0a4e4a; }
-  .cell.wrap{ white-space:normal; }
-  .tbody .row:nth-child(odd){ background:var(--row-odd); }
-  .tbody .row:nth-child(even){ background:var(--row-even); }
-
-  .row.movie{ grid-template-columns: 1.6fr 140px 100px minmax(260px,2fr) 150px 96px 96px 96px 70px 230px; }
-
-  .desc{ max-height: 1.6em; overflow:hidden; text-overflow:ellipsis; }
-  .desc.open{ max-height:none; white-space:normal; }
-  .more{ margin-left:8px; font-weight:800; color:var(--link); cursor:pointer; }
-
-  .btn-mini{
-    border:1px solid var(--border); background:#eef2f7; color:#0f172a;
-    border-radius:8px; padding:6px 8px; cursor:pointer; font-weight:800; font-size:13px; margin-right:6px;
+  .head,.cell{
+    padding:10px 12px; border-bottom:1px solid var(--border);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .btn-mini.ok{   background:#e6f4ea; color:var(--ok);   border-color:#b9e0c0; }
-  .btn-mini.info{ background:#e6f0fb; color:var(--info); border-color:#c7d5f5; }
-  .btn-mini.dang{ background:#fdeaea; color:var(--danger); border-color:#f3b8b8; }
+  .head{ font-weight:900; color:#cfe8ff; }
+  .tbody .row:nth-child(odd){ background:var(--band-ep); }
+  .tbody .row:nth-child(even){ background:#4d4d4d; }
+
+  /* Movies grid simpler */
+  .row.movie{ grid-template-columns: 1.7fr 140px 100px minmax(300px,2fr) 150px 96px 96px 96px 74px 230px; }
+
+  /* Description truncation */
+  .desc{ max-height:1.6em; overflow:hidden; text-overflow:ellipsis; }
+  .desc.open{ max-height:none; white-space:normal; }
+  .more{ margin-left:8px; font-weight:900; color:var(--link); cursor:pointer; }
+
+  /* Buttons + icons */
+  .btn-mini{
+    border:1px solid var(--border); background:#2b2f36; color:#e8edf3; border-radius:8px;
+    padding:6px 8px; cursor:pointer; font-weight:900; font-size:13px; margin-right:6px;
+  }
+  .btn-mini.info{ background:rgba(74,176,255,.15); color:var(--info); }
+  .btn-mini.ok{   background:rgba(61,220,132,.15); color:var(--ok); }
+  .btn-mini.dang{ background:rgba(255,107,107,.15); color:var(--danger); }
   .btn-mini:focus{ outline:3px solid var(--focus); outline-offset:2px; }
 
-  a.link{ color:var(--link); text-decoration:none; border-bottom:1px dotted #9ec5ff; }
+  a.link{ color:var(--link); text-decoration:none; border-bottom:1px dotted #6fbaff; }
   a.link:focus{ outline:3px solid var(--focus); outline-offset:2px; }
-  .status-dot{ width:10px; height:10px; border-radius:999px; background:#94a3b8; display:inline-block; border:1px solid var(--border); }
-  .is-watching .status-dot{ background:#64b5f6; }
-  .is-watched  .status-dot{ background:#81c784; }
 
-  @media (max-width: 1100px){
-    .row{ grid-template-columns: 56px 1.2fr 128px 90px minmax(180px,2fr) 130px 90px 90px 90px 64px 200px; }
-    .row.movie{ grid-template-columns: 1.3fr 125px 90px minmax(210px,2fr) 140px 90px 90px 90px 64px 200px; }
+  /* Filters (checkboxes optional; we use buttons, but keep body classes too) */
+  body.hide-complete .status-watched{ display:none !important; }
+  body.watching-only .row:not(.status-watching){ display:none !important; }
+
+  /* Responsiveness */
+  @media (max-width:1100px){
+    .row{ grid-template-columns:58px 1.3fr 128px 90px minmax(220px,2fr) 130px 92px 92px 92px 68px 200px; }
+    .row.movie{ grid-template-columns:1.5fr 128px 90px minmax(260px,2fr) 140px 92px 92px 92px 68px 200px; }
   }
-  @media (max-width: 860px){
+  @media (max-width:860px){
     .chips{ display:none; }
-    .row{ grid-template-columns: 48px 1.2fr 118px 80px minmax(160px,2fr) 110px 84px 84px 84px 60px 190px; }
-    .row.movie{ grid-template-columns: 1.1fr 115px 84px minmax(190px,2fr) 130px 84px 84px 84px 60px 190px; }
+    .row{ grid-template-columns:52px 1.2fr 118px 84px minmax(200px,2fr) 120px 88px 88px 88px 64px 190px; }
   }
-  @media (max-width: 700px){
-    .row{ grid-template-columns: 44px 1fr 110px 76px minmax(150px,2fr) 0px 80px 80px 80px 56px 160px; }
-    .row .cell:nth-child(6){ display:none; } /* hide 'Source' on small screens */
-    .row.movie{ grid-template-columns: 1fr 108px 76px minmax(180px,2fr) 0px 80px 80px 80px 56px 160px; }
-    .row.movie .cell:nth-child(5){ display:none; }
+  @media (max-width:720px){
+    .row{ grid-template-columns:48px 1fr 110px 78px minmax(180px,2fr) 0px 84px 84px 84px 60px 170px; }
+    .row .cell:nth-child(6){ display:none; } /* hide 'Source' */
   }
 </style>
 </head>
@@ -143,12 +151,12 @@
   <div class="container">
     <header class="app">
       <h1 class="title">The Boys Shows</h1>
-      <div class="toolbar" role="toolbar" aria-label="filters and actions">
-        <button class="btn" id="btnHideComplete" aria-pressed="false">Hide Complete</button>
-        <button class="btn" id="btnWatchingOnly" aria-pressed="false">Watching Only</button>
-        <button class="btn" id="btnExpandAll"  aria-pressed="false">Expand All</button>
-        <button class="btn" id="btnCollapseAll" aria-pressed="false">Collapse All</button>
-        <button class="btn" id="btnReload" aria-pressed="false">Reload Data</button>
+      <div class="toolbar" role="toolbar">
+        <button class="btn" id="btnHideComplete">Hide Complete</button>
+        <button class="btn" id="btnWatchingOnly">Watching Only</button>
+        <button class="btn" id="btnExpandAll">Expand All</button>
+        <button class="btn" id="btnCollapseAll">Collapse All</button>
+        <button class="btn" id="btnReload">Reload Data</button>
       </div>
     </header>
 
@@ -157,9 +165,9 @@
       <div class="card-strip">
         <button class="chev" data-acc="#cardShows">▸</button>
         Shows
-        <span class="badge" id="showsCount">…</span>
+        <span class="badge" id="showsCount">0</span>
       </div>
-      <div class="card-body" id="showsBody"></div>
+      <div class="card-body" id="shows-root"></div>
     </section>
 
     <!-- Movies -->
@@ -167,503 +175,456 @@
       <div class="card-strip">
         <button class="chev" data-acc="#cardMovies">▸</button>
         Movies
-        <span class="badge" id="moviesCount">…</span>
+        <span class="badge" id="moviesCount">0</span>
       </div>
-      <div class="card-body" id="moviesBody"></div>
+      <div class="card-body" id="movies-root"></div>
     </section>
 
-    <p id="err" style="color:#b00020; margin-top:12px;"></p>
+    <p id="error" style="color:#ff9e9e; margin-top:12px;"></p>
   </div>
 
 <script>
-/* =================== Config =================== */
-const DEFAULT_FILE = 'show_and_movie_data.tile.txt';
-const ALT_FILE     = 'show_and_movie_data.txt';
-const NS = 'ajp.lite';  // localStorage namespace
+/* ---------- CONFIG ---------- */
+const DATA_URL = 'show_and_movie_data.tile.txt';  // same folder as HTML
+const NS       = 'ajp.watchstatus';               // localStorage namespace
 
-const L = {
-  tmdbTv  : (id) => `https://www.themoviedb.org/tv/${encodeURIComponent(id)}`,
-  tmdbMov : (id) => `https://www.themoviedb.org/movie/${encodeURIComponent(id)}`,
-  vidsTv  : (id,s,e) => `https://vidsrc.net/embed/tv/${encodeURIComponent(id)}/${encodeURIComponent(s)}/${encodeURIComponent(e)}`,
-  vidsMov : (id) => `https://vidsrc.net/embed/movie/${encodeURIComponent(id)}`,
-  mapTv   : (id,s,e) => `https://mapple.tv/watch/tv/${encodeURIComponent(id)}/${encodeURIComponent(s)}/${encodeURIComponent(e)}`,
-  mapMov  : (id) => `https://mapple.tv/watch/movie/${encodeURIComponent(id)}`,
-  nunTv   : (id,s,e) => `https://nunflix.cc/watch/tv/${encodeURIComponent(id)}/${encodeURIComponent(s)}/${encodeURIComponent(e)}`,
-  nunMov  : (id) => `https://nunflix.cc/watch/movie/${encodeURIComponent(id)}`
+/* Base link builders (plus your extended baseline set) */
+const links = {
+  tmdbShow:   (id)        => `https://www.themoviedb.org/tv/${id}`,
+  tmdbMovie:  (id)        => `https://www.themoviedb.org/movie/${id}`,
+
+  /* VidJoy + VidSrc (prefer VidJoy first, fallback to VidSrc if needed) */
+  vidjoyTv:   (id,s,e)    => `https://vidjoy.pro/embed/tv/${id}/${s}/${e}`,
+  vidjoyMovie:(id)        => `https://vidjoy.pro/embed/movie/${id}`,
+  vidsrcTv:   (id,s,e)    => `https://vidsrc.net/embed/tv/${id}/${s}/${e}`,
+  vidsrcMovie:(id)        => `https://vidsrc.net/embed/movie/${id}`,
+
+  /* Mapple + NunFlix */
+  mappleTv:   (id,s,e)    => `https://mapple.tv/watch/tv/${id}/${s}/${e}`,
+  mappleMovie:(id)        => `https://mapple.tv/watch/movie/${id}`,
+  nunflixTv:  (id,s,e)    => `https://nunflix.cc/watch/tv/${id}/${s}/${e}`,
+  nunflixMovie:(id)       => `https://nunflix.cc/watch/movie/${id}`,
+
+  /* Generic search helpers (also used for Netflix/Prime search buttons) */
+  nunflix:    (q)         => `https://nunflix.com/search?q=${encodeURIComponent(q)}`,
+  mapple:     (q)         => `https://www.mapleflix.com/search?q=${encodeURIComponent(q)}`,
+  netflix:    (q)         => `https://www.netflix.com/search?q=${encodeURIComponent(q)}`,
+  prime:      (q)         => `https://www.primevideo.com/search/ref=atv_sr_sug_?phrase=${encodeURIComponent(q)}`
 };
 
-/* =================== Utils ==================== */
-const $  = (s,r=document)=>r.querySelector(s);
-const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
-const esc = (s)=> String(s ?? '')
-  .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
-  .replaceAll('"','&quot;').replaceAll("'","&#39;');
+/* ---------- UTIL ---------- */
+const qs  = (s, r = document) => r.querySelector(s);
+const qsa = (s, r = document) => [...r.querySelectorAll(s)];
 
-const key = (type,id,season,ep)=> [NS,type,id,season??'',ep??''].filter(Boolean).join('.');
-function setStatus(type,id,s,e,val){ localStorage.setItem(key(type,id,s,e), val); }
-function getStatus(type,id,s,e){ return localStorage.getItem(key(type,id,s,e)) || 'none'; }
-
-function splitPipes(line){
-  // supports "quoted|segments"
-  const out=[]; let cur='',q=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='"'){ q=!q; continue; }
-    if(ch==='|' && !q){ out.push(cur); cur=''; } else cur+=ch;
-  }
-  out.push(cur);
-  return out.map(s=>s.replace(/\\n/g,'\n').trim());
+function keyFor(type, tmdbId, seasonNum = null, epNum = null) {
+  // ajp.watchstatus.show.12345.S1.E2  |  ajp.watchstatus.movie.6789
+  let k = `${NS}.${type}.${tmdbId}`;
+  if (seasonNum != null) k += `.S${seasonNum}`;
+  if (epNum    != null) k += `.E${epNum}`;
+  return k;
+}
+function getStatus(type, tmdbId, seasonNum = null, epNum = null) {
+  return localStorage.getItem(keyFor(type, tmdbId, seasonNum, epNum)) || 'none';
+}
+function setStatus(type, tmdbId, seasonNum, epNum, status) {
+  localStorage.setItem(keyFor(type, tmdbId, seasonNum, epNum), status);
 }
 
-/* =================== Robust Loader ==================== */
-/* Tries multiple candidate URLs so GH Pages / local / docs/ all work */
-async function fetchFirst(urls, force=false){
-  const tried = [];
-  for(const u of [...new Set(urls)]){
+/* Robust fetch:
+   - Use DATA_URL by default
+   - Accept ?data= override
+   - Try absolute GH Pages + RAW fallbacks */
+async function fetchData(force=false){
+  const override = new URLSearchParams(location.search).get('data');
+  const baseDir  = location.href.substring(0, location.href.lastIndexOf('/')+1);
+  const rawBase  = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/';
+
+  const candidates = [
+    override,
+    DATA_URL,
+    baseDir + DATA_URL,
+    `/IPTV_Data_Harmonization_System/${DATA_URL}`,
+    `/IPTV_Data_Harmonization_System/docs/${DATA_URL}`,
+    `${rawBase}${DATA_URL}`
+  ].filter(Boolean);
+
+  const tried=[];
+  for(const url of [...new Set(candidates)]){
     try{
-      const r = await fetch(u, {cache: force?'reload':'no-store'});
-      tried.push({url:u, status:r.status});
+      const r = await fetch(url, {cache: force?'reload':'no-store'});
+      tried.push(`${url} [${r.status}]`);
       if(r.ok){
-        const text = await r.text();
-        if(text && text.trim().length>0) return {text, used:u, tried};
+        const txt = await r.text();
+        if(txt && txt.trim()) return {text:txt, used:url, tried};
       }
-    }catch(e){
-      tried.push({url:u, status:'ERR'});
-    }
+    }catch(e){ tried.push(`${url} [ERR]`); }
   }
   return {text:null, used:null, tried};
 }
 
-function candidateURLs(){
-  const q = new URLSearchParams(location.search).get('data');
-  if(q) return [q];
+/* ---------- PARSER ---------- */
+/* Pipe-delimited with possible quoted fields. Lines starting with '#' are comments.
+   Types: show|..., season|..., episode|..., movie|... */
+function parseDataFile(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const shows = new Map(); // tmdbId -> {meta, seasons: Map(seasonNum -> {... episodes: []})}
+  const movies = [];
 
-  const here = location.href;
-  const baseDir = here.substring(0, here.lastIndexOf('/')+1);
-  const parts = location.pathname.split('/').filter(Boolean); // /user.github.io/<repo>/file
-  const repoBase = parts.length>=1 ? `/${parts[0]}/` : '/';
+  for (const raw of lines) {
+    if (raw.startsWith('#')) continue;
+    const fields = splitPipes(raw);
+    const kind = (fields[0] || '').toLowerCase();
 
-  return [
-    DEFAULT_FILE,                       // same folder
-    ALT_FILE,                           // alt filename
-    baseDir + DEFAULT_FILE,             // absolute to current doc
-    baseDir + ALT_FILE,
-    repoBase + DEFAULT_FILE,            // site root + file
-    repoBase + ALT_FILE,
-    './docs/' + DEFAULT_FILE,           // try docs/
-    './docs/' + ALT_FILE,
-    repoBase + 'docs/' + DEFAULT_FILE,
-    repoBase + 'docs/' + ALT_FILE
-  ];
-}
-
-/* =================== Parse ==================== */
-function parse(text){
-  const shows=new Map(); const movies=[];
-  let currentShow=null, lastSeason=null;
-
-  for(const raw of text.split(/\r?\n/)){
-    const line=raw.trim();
-    if(!line || line.startsWith('#')) continue;
-
-    // Section markers (optional, ignored otherwise)
-    if(line.toUpperCase()==='SHOWS' || line.toUpperCase()==='MOVIES') continue;
-
-    const f=splitPipes(line);
-    const type=(f[0]||'').toLowerCase();
-
-    if(type==='show'){
+    if (kind === 'show') {
       // show|tmdb_id|name|overview|#_of_seasons|date|status|source|schedule|tmdb_url_link
-      const [, id, name, overview, nSeasons, date, status, source, schedule, tmdb] = f;
-      currentShow = { id, name, overview, nSeasons, date, status, source, schedule, tmdb: tmdb || L.tmdbTv(id), seasons:new Map() };
-      shows.set(id,currentShow); lastSeason=null;
-    } else if(type==='season' && currentShow){
+      const [, id, name, overview, nSeasons, date, status, source, schedule, tmdbUrl] = fields;
+      shows.set(id, {
+        id, name, overview, nSeasons: toInt(nSeasons), date, status, source, schedule, tmdbUrl,
+        seasons: new Map()
+      });
+
+    } else if (kind === 'season') {
       // season|tmdb_id|seasonNum|year|overview|watchStatus
-      const [, sid, num, year, overview, watchStatus] = f;
-      if(sid!==currentShow.id) continue;
-      lastSeason={ num:String(num), year, overview, watchStatus, episodes:[] };
-      currentShow.seasons.set(String(num), lastSeason);
-    } else if(type==='episode' && currentShow && lastSeason){
+      const [, showId, seasonNum, year, overview, watchStatus] = fields;
+      const show = shows.get(showId);
+      if (!show) continue;
+      show.seasons.set(String(seasonNum), { showId, seasonNum: String(seasonNum), year, overview, watchStatus, episodes: [] });
+
+    } else if (kind === 'episode') {
       // episode|tmdb_id|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
-      const [, sid, epNum, name, date, desc, runtime, source, vidSrc, mapple, nun, tbd, watchStatus]=f;
-      if(sid!==currentShow.id) continue;
-      lastSeason.episodes.push({
-        epNum, name, date, desc, runtime, source,
-        links:{
-          vids:(vidSrc && vidSrc!=='N/A') ? vidSrc : L.vidsTv(sid, lastSeason.num, epNum),
-          map :(mapple && mapple!=='N/A') ? mapple : L.mapTv(sid, lastSeason.num, epNum),
-          nun :(nun && nun!=='N/A') ? nun : L.nunTv(sid, lastSeason.num, epNum),
-          tbd :(tbd && tbd!=='N/A') ? tbd : null
-        },
-        watchStatus
-      });
-    } else if(type==='movie'){
+      const [, showId, epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = fields;
+      const show = shows.get(showId);
+      if (!show) continue;
+      // Put into the latest season unless your file adds explicit season number
+      const latest = pickLatestSeason(show);
+      if (!latest) continue;
+      latest.episodes.push({ showId, epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
+
+    } else if (kind === 'movie') {
       // movie|tmdb_id|name|overview|releaseDate|rating|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
-      const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nun, tbd, watchStatus]=f;
-      movies.push({
-        id, name, overview, releaseDate, rating, runtime, source,
-        links:{
-          vids:(vidSrc && vidSrc!=='N/A') ? vidSrc : L.vidsMov(id),
-          map :(mapple && mapple!=='N/A') ? mapple : L.mapMov(id),
-          nun :(nun && nun!=='N/A') ? nun : L.nunMov(id),
-          tbd :(tbd && tbd!=='N/A') ? tbd : null
-        },
-        watchStatus
-      });
+      const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = fields;
+      movies.push({ id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
     }
   }
-  return {shows, movies};
+  return { shows, movies };
 }
 
-/* =================== Render =================== */
-function renderAll(model){
-  renderShows(model);
-  renderMovies(model);
-  restoreStates();
-  applyFilters();
-  // open both sections after first successful render
-  toggleCard('#cardShows', true);
-  toggleCard('#cardMovies', true);
-}
-
-function renderShows({shows}){
-  const body = $('#showsBody'); body.innerHTML='';
-  $('#showsCount').textContent = String(shows.size);
-
-  for(const show of shows.values()){
-    const wrap = document.createElement('div');
-    wrap.className='show';
-
-    const showBodyId = `show-${show.id}`;
-    wrap.innerHTML = `
-      <div class="show-head" data-toggle="#${showBodyId}" tabindex="0" role="button" aria-expanded="false">
-        <span class="chev" aria-hidden="true">▸</span>
-        <div class="name">${esc(show.name)}</div>
-        <div class="chips">
-          ${show.date ? `<span class="chip">${esc(show.date)}</span>`:''}
-          ${show.status ? `<span class="chip">${esc(show.status)}</span>`:''}
-          ${show.source ? `<span class="chip">${esc(show.source)}</span>`:''}
-          ${show.schedule ? `<span class="chip">${esc(show.schedule)}</span>`:''}
-          <a class="link" href="${show.tmdb}" target="_blank" rel="noopener">TMDB</a>
-        </div>
-      </div>
-      <div class="show-body" id="${showBodyId}"></div>
-    `;
-    body.appendChild(wrap);
-
-    const host = $('#'+showBodyId);
-    const seasons = [...show.seasons.values()].sort((a,b)=>Number(a.num)-Number(b.num));
-    for(const s of seasons){
-      const seasonId = `tbl-${show.id}-${s.num}`;
-      const season = document.createElement('div');
-      season.className='season';
-      season.innerHTML = `
-        <div class="season-head" data-toggle="#${seasonId}" tabindex="0" role="button" aria-expanded="false">
-          <span class="chev" aria-hidden="true">▸</span>
-          <div>Season ${esc(s.num)} ${s.year?`(${esc(s.year)})`:''}</div>
-          <div class="season-sub">${esc(s.overview||'')}</div>
-        </div>
-        <div id="${seasonId}" style="display:none;">
-          ${renderEpisodeTable(show.id, s)}
-        </div>
-      `;
-      host.appendChild(season);
-    }
+function splitPipes(line) {  // robust splitter with "quoted|fields"
+  const out = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; continue; }
+    if (ch === '|' && !inQ) { out.push(cur); cur = ''; }
+    else cur += ch;
   }
+  out.push(cur);
+  return out.map(s => s.replace(/\\n/g, '\n').trim());
+}
+const toInt = (x) => (x == null || x === '' ? null : parseInt(x, 10));
+function pickLatestSeason(show) {
+  const nums = [...show.seasons.keys()].map(n => parseInt(n, 10)).filter(n => !Number.isNaN(n));
+  if (!nums.length) return null;
+  const max = Math.max(...nums);
+  return show.seasons.get(String(max));
 }
 
-function renderEpisodeTable(showId, s){
-  const rows = s.episodes.slice().sort((a,b)=>Number(a.epNum)-Number(b.epNum)).map(ep=>{
-    const saved = getStatus('ep', showId, s.num, ep.epNum) || ep.watchStatus || 'none';
-    const cls = saved==='watched' ? 'is-watched' : (saved==='watching' ? 'is-watching' : '');
-    const rowId = `ep-${showId}-${s.num}-${ep.epNum}`;
-    const tbd = ep.links.tbd ? `<a class="link" href="${ep.links.tbd}" target="_blank" rel="noopener">❓</a>` : '—';
+/* ---------- RENDER ---------- */
+function renderAll({ shows, movies }) {
+  const showsRoot = qs('#shows-root');
+  const moviesRoot = qs('#movies-root');
+  showsRoot.innerHTML = '';
+  moviesRoot.innerHTML = '';
 
-    return `
-      <div class="row ${cls}" id="${rowId}" data-type="ep" data-show="${showId}" data-season="${s.num}" data-ep="${ep.epNum}" data-status="${saved}">
-        <div class="cell">#${esc(ep.epNum)}</div>
-        <div class="cell">${esc(ep.name||'')}</div>
-        <div class="cell">${esc(ep.date||'')}</div>
-        <div class="cell">${esc(ep.runtime||'')}</div>
-        <div class="cell">
-          <span class="desc">${esc(ep.desc||'')}</span>
-          <span class="more" data-more="${rowId}">More</span>
-        </div>
-        <div class="cell">${esc(ep.source||'')}</div>
-        <div class="cell"><a class="link" href="${ep.links.vids}" target="_blank" rel="noopener">📺 VidSrc</a></div>
-        <div class="cell"><a class="link" href="${ep.links.map}"  target="_blank" rel="noopener">🌐 Mapple</a></div>
-        <div class="cell"><a class="link" href="${ep.links.nun}"  target="_blank" rel="noopener">🎬 NunFlix</a></div>
-        <div class="cell">${tbd}</div>
-        <div class="cell">${btnSet(rowId, saved)}</div>
+  // SHOWS (collapsed by default; user can expand)
+  for (const show of shows.values()) {
+    showsRoot.appendChild(renderShow(show));
+  }
+  // MOVIES
+  for (const m of movies) {
+    moviesRoot.appendChild(renderMovie(m));
+  }
+
+  // Counts
+  qs('#showsCount').textContent  = String(shows.size);
+  qs('#moviesCount').textContent = String(movies.length);
+}
+
+function renderShow(show) {
+  const wrap = document.createElement('section');
+  wrap.className = 'show';
+  wrap.dataset.tmdbId = show.id;
+  const showBodyId = `show-${show.id}`;
+
+  wrap.innerHTML = `
+    <header class="show-head" onclick="toggleSection(this)" tabindex="0" role="button" aria-expanded="false">
+      <span class="chev">▸</span>
+      <div class="name">${esc(show.name)}</div>
+      <div class="chips">
+        ${show.date ? `<span class="chip">${esc(show.date)}</span>`:''}
+        ${show.status ? `<span class="chip">${esc(show.status)}</span>`:''}
+        ${show.source ? `<span class="chip">${esc(show.source)}</span>`:''}
+        ${show.schedule ? `<span class="chip">${esc(show.schedule)}</span>`:''}
+        <a class="link" href="${show.tmdbUrl || links.tmdbShow(show.id)}" target="_blank" rel="noopener">TMDB</a>
       </div>
-    `;
-  }).join('');
+    </header>
+    <div class="show-body body" id="${showBodyId}" style="display:none;">
+      <p class="overview" style="color:var(--muted);">${esc(show.overview || '')}</p>
+      <div class="seasons"></div>
+    </div>
+  `;
+
+  const seasonsRoot = qs('.seasons', wrap);
+  const seasonsSorted = [...show.seasons.values()].sort((a,b) => parseInt(a.seasonNum,10) - parseInt(b.seasonNum,10));
+  for (const s of seasonsSorted) {
+    seasonsRoot.appendChild(renderSeason(show, s));
+  }
+  return wrap;
+}
+
+function renderSeason(show, season) {
+  const el = document.createElement('article');
+  el.className = 'season';
+  el.dataset.season = season.seasonNum;
+  const seasonBodyId = `tbl-${show.id}-${season.seasonNum}`;
+
+  el.innerHTML = `
+    <header class="season-head" onclick="toggleSection(this)" tabindex="0" role="button" aria-expanded="false">
+      <span class="chev">▸</span>
+      <div>Season ${esc(season.seasonNum)} ${season.year?`(${esc(season.year)})`:''}</div>
+      <div class="season-sub">${esc(season.overview || '')}</div>
+    </header>
+    <div class="body" id="${seasonBodyId}" style="display:none;">
+      ${renderEpisodeTable(show.id, season)}
+    </div>
+  `;
+  return el;
+}
+
+function renderEpisodeTable(showId, season) {
+  const rows = [...season.episodes]
+    .sort((a,b) => parseInt(a.epNum,10) - parseInt(b.epNum,10))
+    .map(ep => renderEpisodeRow(showId, season.seasonNum, ep))
+    .join('');
 
   return `
     <div class="table" role="table" aria-label="Episodes">
       <div class="thead row" role="row">
-        <div class="head" role="columnheader">#</div>
-        <div class="head" role="columnheader">Title</div>
-        <div class="head" role="columnheader">Date</div>
-        <div class="head" role="columnheader">Length</div>
-        <div class="head" role="columnheader">Description</div>
-        <div class="head" role="columnheader">Source</div>
-        <div class="head" role="columnheader">VidSrc</div>
-        <div class="head" role="columnheader">Mapple</div>
-        <div class="head" role="columnheader">NunFlix</div>
-        <div class="head" role="columnheader">TBD</div>
-        <div class="head" role="columnheader">Status</div>
+        <div class="head">#</div>
+        <div class="head">Title</div>
+        <div class="head">Date</div>
+        <div class="head">Length</div>
+        <div class="head">Description</div>
+        <div class="head">Source</div>
+        <div class="head">VidJoy</div>
+        <div class="head">VidSrc</div>
+        <div class="head">Mapple</div>
+        <div class="head">NunFlix</div>
+        <div class="head">Status / Apps</div>
       </div>
       <div class="tbody">${rows}</div>
     </div>
   `;
 }
 
-function btnSet(id, state){
-  if(state==='watched'){
-    return `
-      <button class="btn-mini dang" data-action="none" data-target="${id}">❌ Unmark</button>
-      <button class="btn-mini info" data-action="watching" data-target="${id}">⏳ Watching</button>
-    `;
-  } else if(state==='watching'){
-    return `
-      <button class="btn-mini ok" data-action="watched" data-target="${id}">✅ Watched</button>
-      <button class="btn-mini dang" data-action="none" data-target="${id}">❌ Unmark</button>
-    `;
-  } else {
-    return `
-      <button class="btn-mini info" data-action="watching" data-target="${id}">⏳ Watching</button>
-      <button class="btn-mini ok" data-action="watched" data-target="${id}">✅ Watched</button>
-    `;
-  }
-}
+function renderEpisodeRow(showId, seasonNum, ep) {
+  const status = getStatus('episode', showId, seasonNum, ep.epNum);
+  const id = `ep-${showId}-${seasonNum}-${ep.epNum}`;
+  const vidjoy = ep.vidSrc && /vidjoy/i.test(ep.vidSrc) ? ep.vidSrc : links.vidjoyTv(showId, seasonNum, ep.epNum);
+  const vidsrc = ep.vidSrc && /vidsrc/i.test(ep.vidSrc) ? ep.vidSrc : links.vidsrcTv(showId, seasonNum, ep.epNum);
+  const mapple = ep.mapple || links.mappleTv(showId, seasonNum, ep.epNum);
+  const nun    = ep.nunFlix || links.nunflixTv(showId, seasonNum, ep.epNum);
 
-function renderMovies({movies}){
-  const body=$('#moviesBody'); body.innerHTML='';
-  $('#moviesCount').textContent = String(movies.length);
+  const netflix = links.netflix(`${ep.name} ${seasonNum}x${ep.epNum}`);
+  const prime   = links.prime(`${ep.name} ${seasonNum}x${ep.epNum}`);
 
-  const rows = movies.map(m=>{
-    const saved = getStatus('movie', m.id) || m.watchStatus || 'none';
-    const cls = saved==='watched' ? 'is-watched' : (saved==='watching' ? 'is-watching' : '');
-    const id = `mov-${m.id}`;
-    const tbd = m.links.tbd ? `<a class="link" href="${m.links.tbd}" target="_blank" rel="noopener">❓</a>` : '—';
-
-    return `
-      <div class="row movie ${cls}" id="${id}" data-type="movie" data-id="${m.id}" data-status="${saved}">
-        <div class="cell"><a class="link" href="${L.tmdbMov(m.id)}" target="_blank" rel="noopener">${esc(m.name)}</a></div>
-        <div class="cell">${esc(m.releaseDate||'')}</div>
-        <div class="cell">${esc(m.runtime||'')}</div>
-        <div class="cell"><span class="desc">${esc(m.overview||'')}</span><span class="more" data-more="${id}">More</span></div>
-        <div class="cell">${esc(m.source||'')}</div>
-        <div class="cell"><a class="link" href="${m.links.vids}" target="_blank" rel="noopener">📺</a></div>
-        <div class="cell"><a class="link" href="${m.links.map}"  target="_blank" rel="noopener">🌐</a></div>
-        <div class="cell"><a class="link" href="${m.links.nun}"  target="_blank" rel="noopener">🎬</a></div>
-        <div class="cell">${tbd}</div>
-        <div class="cell">${btnSet(id, saved)}</div>
+  return `
+    <div class="row episode-row status-${status}" id="${id}" data-tmdb-id="${showId}" data-season="${seasonNum}" data-ep="${ep.epNum}">
+      <div class="cell">E${esc(ep.epNum)}</div>
+      <div class="cell">${esc(ep.name || '')}</div>
+      <div class="cell">${esc(ep.date || '')}</div>
+      <div class="cell">${esc(ep.runtime || '')}</div>
+      <div class="cell">
+        <span class="desc">${esc(ep.desc || '')}</span>
+        <span class="more" data-more="${id}">More</span>
       </div>
-    `;
-  }).join('');
-
-  const table = document.createElement('div');
-  table.className='table';
-  table.setAttribute('role','table');
-  table.innerHTML = `
-    <div class="thead row">
-      <div class="head">Title</div><div class="head">Release</div><div class="head">Length</div>
-      <div class="head">Overview</div><div class="head">Source</div><div class="head">VidSrc</div>
-      <div class="head">Mapple</div><div class="head">NunFlix</div><div class="head">TBD</div><div class="head">Status</div>
+      <div class="cell">${esc(ep.source || '')}</div>
+      <div class="cell"><a class="link" href="${vidjoy}" target="_blank" rel="noopener">📺 VidJoy</a></div>
+      <div class="cell"><a class="link" href="${vidsrc}" target="_blank" rel="noopener">📺 VidSrc</a></div>
+      <div class="cell"><a class="link" href="${mapple}" target="_blank" rel="noopener">🌐 Mapple</a></div>
+      <div class="cell"><a class="link" href="${nun}"    target="_blank" rel="noopener">🎬 NunFlix</a></div>
+      <div class="cell">
+        <button class="btn-mini info" data-action="watching" title="⏳ Watching">⏳</button>
+        <button class="btn-mini ok"   data-action="watched"  title="✅ Watched">✅</button>
+        <button class="btn-mini dang" data-action="none"     title="❌ Unmark">❌</button>
+        <a class="btn-mini" href="${netflix}" target="_blank" rel="noopener" title="Search Netflix">🅽</a>
+        <a class="btn-mini" href="${prime}"   target="_blank" rel="noopener" title="Search Prime">🅿</a>
+      </div>
     </div>
-    <div class="tbody">${rows}</div>
   `;
-  body.appendChild(table);
 }
 
-/* =================== Interactions =================== */
-function applyFilters(){
-  const hideComplete = $('#btnHideComplete').dataset.on==='1';
-  const watchingOnly = $('#btnWatchingOnly').dataset.on==='1';
+function renderMovie(m) {
+  const status = getStatus('movie', m.id, null, null);
+  const id = `mov-${m.id}`;
 
-  $$('.row.movie, .tbody .row').forEach(r=>{
-    const st = r.dataset.status || 'none';
-    let show = true;
-    if(hideComplete && st==='watched') show=false;
-    if(watchingOnly && st!=='watching') show=false;
-    r.style.display = show ? 'grid' : 'none';
-  });
+  const vidjoy = m.vidSrc && /vidjoy/i.test(m.vidSrc) ? m.vidSrc : links.vidjoyMovie(m.id);
+  const vidsrc = m.vidSrc && /vidsrc/i.test(m.vidSrc) ? m.vidSrc : links.vidsrcMovie(m.id);
+  const mapple = m.mapple || links.mappleMovie(m.id);
+  const nun    = m.nunFlix || links.nunflixMovie(m.id);
+  const netflix = links.netflix(m.name);
+  const prime   = links.prime(m.name);
 
-  // hide season shells if all children hidden
-  $$('.season').forEach(season=>{
-    const tbody = season.querySelector('.tbody');
-    if(!tbody) return;
-    const any = $$('.row', tbody).some(r => r.style.display !== 'none');
-    season.style.display = any ? 'block' : 'none';
-  });
+  const row = document.createElement('div');
+  row.className = `row movie status-${status} movie-row`;
+  row.id = id;
+  row.dataset.tmdbId = m.id;
+
+  row.innerHTML = `
+    <div class="cell"><a class="link" href="${links.tmdbMovie(m.id)}" target="_blank" rel="noopener">${esc(m.name)}</a></div>
+    <div class="cell">${esc(m.releaseDate || '')}</div>
+    <div class="cell">${esc(m.runtime || '')}</div>
+    <div class="cell">
+      <span class="desc">${esc(m.overview || '')}</span>
+      <span class="more" data-more="${id}">More</span>
+    </div>
+    <div class="cell">${esc(m.source || '')}</div>
+    <div class="cell"><a class="link" href="${vidjoy}" target="_blank" rel="noopener">📺 VidJoy</a></div>
+    <div class="cell"><a class="link" href="${vidsrc}" target="_blank" rel="noopener">📺 VidSrc</a></div>
+    <div class="cell"><a class="link" href="${mapple}" target="_blank" rel="noopener">🌐 Mapple</a></div>
+    <div class="cell"><a class="link" href="${nun}"    target="_blank" rel="noopener">🎬 NunFlix</a></div>
+    <div class="cell">
+      <button class="btn-mini info" data-action="watching" title="⏳ Watching">⏳</button>
+      <button class="btn-mini ok"   data-action="watched"  title="✅ Watched">✅</button>
+      <button class="btn-mini dang" data-action="none"     title="❌ Unmark">❌</button>
+      <a class="btn-mini" href="${netflix}" target="_blank" rel="noopener" title="Search Netflix">🅽</a>
+      <a class="btn-mini" href="${prime}"   target="_blank" rel="noopener" title="Search Prime">🅿</a>
+    </div>
+  `;
+  return row;
 }
 
-function restoreStates(){
-  $$('.row[data-type="ep"], .row.movie').forEach(row=>{
-    const type=row.dataset.type;
-    let saved='none';
-    if(type==='ep') saved=getStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep);
-    else            saved=getStatus('movie', row.dataset.id);
-    if(saved && saved!=='none') setRowState(row, saved, false);
-  });
+/* ---------- GLOBAL TOGGLES (for inline onclick) ---------- */
+function toggle(targetEl) {
+  const isHeader = targetEl.classList.contains('show-head') || targetEl.classList.contains('season-head');
+  if (!isHeader) return;
+  const body = targetEl.nextElementSibling;
+  const chev = targetEl.querySelector('.chev');
+  const expanded = targetEl.getAttribute('aria-expanded') === 'true';
+  targetEl.setAttribute('aria-expanded', String(!expanded));
+  if (chev) chev.textContent = expanded ? '▸' : '▾';
+  if (body) body.style.display = expanded ? 'none' : '';
 }
 
-function setRowState(row, state, persist=true){
-  row.dataset.status = state;
-  row.classList.toggle('is-watched',  state==='watched');
-  row.classList.toggle('is-watching', state==='watching');
-  const id=row.id;
-  const lastCell = row.lastElementChild;
-  if(lastCell) lastCell.innerHTML = btnSet(id, state);
-  if(persist){
-    if(row.dataset.type==='ep'){
-      setStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep, state);
-    }else{
-      setStatus('movie', row.dataset.id, null, null, state);
-    }
-  }
-  applyFilters();
-}
+// Exposed global names you requested
+window.toggleSection = function (el) { toggle(el); };
+window.toggleComplete = function () {
+  // maintain body class for compatibility
+  const hide = true; // if you later wire checkboxes, read them here
+  document.body.classList.toggle('hide-complete');
+};
+window.toggleWatched = function () {
+  document.body.classList.toggle('watching-only');
+};
 
-function toggleCard(sel, open){
-  const card=$(sel); if(!card) return;
-  const body=card.querySelector('.card-body');
-  const btn = card.querySelector('.card-strip .chev');
-  const willOpen = open!=null ? open : !card.classList.contains('open');
-  card.classList.toggle('open', willOpen);
-  if(btn) btn.textContent = willOpen ? '▾' : '▸';
-  if(body) body.style.display = willOpen ? 'block' : 'none';
-}
-
-/* =================== Boot =================== */
-function init(){
-  // Card accordions
-  $$('.card .card-strip .chev').forEach(b=>{
-    b.addEventListener('click', e => toggleCard(e.currentTarget.dataset.acc));
+/* ---------- INIT + DELEGATED EVENTS ---------- */
+function init() {
+  // Card accordions collapse by default (as requested)
+  // (user opens manually; buttons provided below can mass-toggle)
+  qsa('.card .card-strip .chev').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const card = qs(btn.dataset.acc);
+      const body = card.querySelector('.card-body');
+      const open = !card.classList.contains('open');
+      card.classList.toggle('open', open);
+      body.style.display = open ? 'block':'none';
+      btn.textContent = open ? '▾':'▸';
+    });
   });
 
-  // Toolbar toggles
-  $('#btnHideComplete').addEventListener('click', e=>{
-    const b=e.currentTarget; b.dataset.on = b.dataset.on==='1'?'0':'1';
-    b.classList.toggle('ticked', b.dataset.on==='1');
-    b.textContent = b.dataset.on==='1' ? 'Show Complete' : 'Hide Complete';
-    applyFilters();
+  // Toolbar filters
+  qs('#btnHideComplete').addEventListener('click', e=>{
+    document.body.classList.toggle('hide-complete');
+    e.currentTarget.classList.toggle('ticked');
+    e.currentTarget.textContent = document.body.classList.contains('hide-complete') ? 'Show Complete' : 'Hide Complete';
   });
-  $('#btnWatchingOnly').addEventListener('click', e=>{
-    const b=e.currentTarget; b.dataset.on = b.dataset.on==='1'?'0':'1';
-    b.classList.toggle('ticked', b.dataset.on==='1');
-    b.textContent = b.dataset.on==='1' ? 'Show All' : 'Watching Only';
-    applyFilters();
+  qs('#btnWatchingOnly').addEventListener('click', e=>{
+    document.body.classList.toggle('watching-only');
+    e.currentTarget.classList.toggle('ticked');
+    e.currentTarget.textContent = document.body.classList.contains('watching-only') ? 'Show All' : 'Watching Only';
   });
-  $('#btnExpandAll').addEventListener('click', ()=>{
-    // open every show & every season
-    $$('.show-head').forEach(h=>{ if($(h.dataset.toggle)?.style.display!=='block'){ h.click(); } });
-    $$('.season-head').forEach(h=>{ if($(h.dataset.toggle)?.style.display!=='block'){ h.click(); } });
+  qs('#btnExpandAll').addEventListener('click', ()=>{
+    qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='true')  toggle(h); });
+    qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='true') toggle(h); });
   });
-  $('#btnCollapseAll').addEventListener('click', ()=>{
-    $$('.season-head').forEach(h=>{ if($(h.dataset.toggle)?.style.display!=='none'){ h.click(); } });
-    $$('.show-head').forEach(h=>{ if($(h.dataset.toggle)?.style.display!=='none'){ h.click(); } });
+  qs('#btnCollapseAll').addEventListener('click', ()=>{
+    qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false') toggle(h); });
+    qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false')  toggle(h); });
   });
-  $('#btnReload').addEventListener('click', ()=> loadData(true));
+  qs('#btnReload').addEventListener('click', ()=> load(true));
 
-  // Delegated clicks (show/season/row actions)
+  // Delegated clicks: row status + More/Less
   document.addEventListener('click', (e)=>{
-    const t=e.target;
-
-    // Show toggle
-    const showHead = t.closest('.show-head');
-    if(showHead){
-      const id = showHead.dataset.toggle;
-      const el = $(id);
-      const open = el && el.style.display!=='block';
-      if(el){ el.style.display = open ? 'block':'none'; }
-      const chev = showHead.querySelector('.chev'); if(chev) chev.textContent = open ? '▾':'▸';
-      showHead.setAttribute('aria-expanded', String(open));
-      return;
-    }
-
-    // Season toggle
-    const seasonHead = t.closest('.season-head');
-    if(seasonHead){
-      const id = seasonHead.dataset.toggle;
-      const el = $(id);
-      const open = el && el.style.display!=='block';
-      if(el){ el.style.display = open ? 'block':'none'; }
-      const chev = seasonHead.querySelector('.chev'); if(chev) chev.textContent = open ? '▾':'▸';
-      seasonHead.setAttribute('aria-expanded', String(open));
-      return;
-    }
-
-    // More/less for description
-    const more = t.closest('.more');
-    if(more){
-      const rid = more.dataset.more;
-      const row = document.getElementById(rid);
-      if(!row) return;
-      const d = row.querySelector('.desc');
-      if(!d) return;
-      const open = !d.classList.contains('open');
-      d.classList.toggle('open', open);
-      more.textContent = open ? 'Less' : 'More';
-      return;
-    }
-
-    // Status buttons
-    const btn = t.closest('[data-action][data-target]');
+    const btn = e.target.closest('button[data-action]');
     if(btn){
-      const row = document.getElementById(btn.dataset.target);
+      const row = e.target.closest('.episode-row, .movie-row');
       if(!row) return;
       const action = btn.dataset.action; // watching | watched | none
-      const newState = action==='none' ? 'none' : action;
-      setRowState(row, newState, true);
+      if(row.classList.contains('episode-row')){
+        const id = row.dataset.tmdbId, s = parseInt(row.dataset.season,10), ep = parseInt(row.dataset.ep,10);
+        setStatus('episode', id, s, ep, action);
+      }else{
+        const id = row.dataset.tmdbId;
+        setStatus('movie', id, null, null, action);
+      }
+      row.classList.remove('status-watching','status-watched','status-none');
+      row.classList.add(`status-${action}`);
+      return;
+    }
+
+    const more = e.target.closest('.more');
+    if(more){
+      const row = qs('#'+more.dataset.more);
+      const desc = row?.querySelector('.desc');
+      if(desc){
+        const open = !desc.classList.contains('open');
+        desc.classList.toggle('open', open);
+        more.textContent = open ? 'Less' : 'More';
+      }
       return;
     }
   });
 
-  // Keyboard toggle (Enter)
-  document.addEventListener('keydown', (e)=>{
-    if(e.key!=='Enter') return;
-    const sh = e.target.closest('.show-head');
-    const se = e.target.closest('.season-head');
-    if(sh) sh.click();
-    if(se) se.click();
-  });
-
-  loadData(false);
+  load(false);
 }
 
-async function loadData(force){
-  $('#err').textContent='';
-  $('#showsCount').textContent='…';
-  $('#moviesCount').textContent='…';
-
-  const urls = candidateURLs();
-  const {text, used, tried} = await fetchFirst(urls, force);
-
+async function load(force){
+  const err = qs('#error'); err.textContent='';
+  const {text, tried} = await fetchData(force);
   if(!text){
-    const list = tried.map(t => `• ${t.url}  [${t.status}]`).join('\n');
-    $('#err').innerHTML =
-      'Could not load data file. Tried:<br><pre style="white-space:pre-wrap;background:#fff;border:1px solid #eee;padding:8px;border-radius:8px;">'+
-      esc(list) + '</pre>' +
-      'Tip: ensure the data file sits next to this HTML or pass <code>?data=/IPTV_Data_Harmonization_System/show_and_movie_data.tile.txt</code> in the URL.';
-    $('#showsCount').textContent='0';
-    $('#moviesCount').textContent='0';
-    $('#showsBody').innerHTML='';
-    $('#moviesBody').innerHTML='';
+    err.innerHTML = 'Could not load data file.<br><pre style="white-space:pre-wrap;background:#1a1a1a;border:1px solid #333;padding:8px;border-radius:8px;color:#ddd;">'
+      + tried.join('\n') + '</pre>'
+      + 'Tip: keep the txt next to this HTML in /docs, or pass <code>?data=</code> with a RAW URL.';
+    qs('#shows-root').innerHTML=''; qs('#movies-root').innerHTML='';
+    qs('#showsCount').textContent='0'; qs('#moviesCount').textContent='0';
     return;
   }
-
   try{
-    const model = parse(text);
+    const model = parseDataFile(text);
     renderAll(model);
   }catch(e){
     console.error(e);
-    $('#err').textContent = 'Parse error: '+e.message;
-    $('#showsCount').textContent='0';
-    $('#moviesCount').textContent='0';
+    err.textContent = 'Parse error: '+e.message;
   }
+}
+
+/* ---------- HELPERS ---------- */
+function esc(s) {
+  return String(s ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 document.addEventListener('DOMContentLoaded', init);
