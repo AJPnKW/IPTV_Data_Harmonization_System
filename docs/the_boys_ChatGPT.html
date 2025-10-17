@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>The Boys Shows • Dark UI (TBS-DARK-3.1)</title>
+<title>The Boys Shows • Dark UI (TBS-DARK-3.2)</title>
 <!--
   the_boys_ChatGPT.html
   Dark, high-contrast UI with show→season→episode accordions.
-  Includes your CONFIG/parser/globals (DATA_URL, NS, keyFor/get/set, parseDataFile, toggleSection/Complete/Watched)
-  Version: 3.1  |  2025-10-16
+  Includes CONFIG/parser/globals (DATA_URL, NS, keyFor/get/set, parseDataFile, toggleSection/Complete/Watched)
+  Version: 3.2  |  2025-10-16
 -->
 
 <style>
@@ -257,11 +257,11 @@ async function fetchData(force=false){
 
 /* ---------- PARSER ---------- */
 /* Handles:
-   - show|...
+   - show|tmdb_id|name|overview|#_of_seasons|date|status|source|schedule|tmdb_url_link
    - season|tmdb_id|seasonNum|year|overview|watchStatus
-   - episode|tmdb_id|epNum|name|...   (legacy)
-   - episode|tmdb_id|seasonNum|epNum|name|...  (explicit season)
-   - movie|...
+   - episode|tmdb|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus       (legacy)
+   - episode|tmdb|seasonNum|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus  (explicit)
+   - movie|tmdb_id|...
    Ignores section labels: SHOWS / SEASONS / EPISODES / MOVIES
 */
 function parseDataFile(text) {
@@ -287,9 +287,8 @@ function parseDataFile(text) {
           seasons: new Map()
         });
       } else {
-        // merge minimal dup
         const s = shows.get(id);
-        s.name = s.name || name; s.overview = s.overview || overview;
+        s.name ||= name; s.overview ||= overview;
       }
 
     } else if (kind === 'season') {
@@ -302,14 +301,11 @@ function parseDataFile(text) {
         show.seasons.set(key, { showId, seasonNum: key, year, overview, watchStatus, episodes: [] });
       } else {
         const s = show.seasons.get(key);
-        s.year = s.year || year; s.overview = s.overview || overview; s.watchStatus = s.watchStatus || watchStatus;
+        s.year ||= year; s.overview ||= overview; s.watchStatus ||= watchStatus;
       }
 
     } else if (kind === 'episode') {
-      /* Support both:
-         legacy:  episode|tmdb|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
-         explicit:episode|tmdb|seasonNum|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
-      */
+      /* Support both layouts; create season if missing, even if episodes come first */
       const tmdb = f[1];
       const show = ensureShow(shows, tmdb);
       if (!show) continue;
@@ -317,23 +313,22 @@ function parseDataFile(text) {
       let idx = 2;
       let seasonNum, epNum;
 
-      // try to detect explicit season number
+      // Detect explicit "seasonNum|epNum"
       const maybeSeason = parseInt(f[2], 10);
-      const maybeEp = parseInt(f[3], 10);
+      const maybeEp     = parseInt(f[3], 10);
       const looksExplicit = Number.isInteger(maybeSeason) && Number.isInteger(maybeEp);
 
       if (looksExplicit) {
         seasonNum = String(maybeSeason);
-        epNum = String(maybeEp);
+        epNum     = String(maybeEp);
         idx = 4;
       } else {
-        // legacy: no seasonNum; try to use latest OR synthesize S1
+        // legacy: epNum only → attach to latest or synthesize S1
         epNum = String(f[2]);
         const latest = pickLatestSeason(show);
         seasonNum = latest ? latest.seasonNum : '1';
-        // ensure season exists
         if (!show.seasons.has(seasonNum)) {
-          show.seasons.set(seasonNum, { showId: tmdb, seasonNum, year: '', overview: '', watchStatus: '', episodes: [] });
+          show.seasons.set(seasonNum, { showId: tmdb, seasonNum, year:'', overview:'', watchStatus:'', episodes:[] });
         }
         idx = 3;
       }
