@@ -200,8 +200,8 @@ function renderMovies(movies) {
 
   movies.forEach(movie => {
     const row = document.createElement('tr');
-    [movie.id, movie.name, movie.overview, movie.releaseDate, movie.rating, movie.runtime, movie.source, movie.vidSrc, movie.mapple, movie.nunFlix, movie.tbd, movie.watchStatus].forEach(val => {
-      const td = document.createElement('td'); td.textContent = val; row.appendChild(td);
+    [movie.id, movie.name, movie.overview, movie.releaseDate, movie.rating, movie.runtime, movie.source, movie.vidSrc, movie.mapple, movie.nunFlix, movie.tbd, badge(movie.watchStatus)].forEach(val => {
+      const td = document.createElement('td'); td.innerHTML = val; row.appendChild(td);
     });
     table.appendChild(row);
   });
