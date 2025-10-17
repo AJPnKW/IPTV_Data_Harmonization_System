@@ -5,13 +5,12 @@
   <title>The Boys Shows</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    /* Base */
-    :root{
+    :root {
       --bg:#111; --fg:#eee; --accent:#f0c000;
       --block-show:#333; --block-season:#444; --block-item:#555;
-      --blue:#4ea3ff; --green:#35c46d; --white:#fff; --red:#ff5c5c; --cyan:#4dd; --yellow:#fc3;
+      --blue:#4ea3ff; --green:#35c46d; --white:#fff; --red:#ff5c5c;
     }
-    *{box-sizing:border-box}
+    * { box-sizing:border-box }
     body {
       font-family: Arial, sans-serif;
       background-color: var(--bg);
@@ -19,123 +18,68 @@
       padding: 16px;
       line-height: 1.35;
     }
-    h1 {
-      text-align: center;
-      color: var(--accent);
-      margin: 8px 0 16px;
-    }
+    h1 { text-align:center; color:var(--accent); margin:8px 0 16px; }
 
-    /* Controls bar */
+    /* Controls */
     .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 12px;
-      align-items: center;
-      justify-content: center;
-      background: #1a1a1a;
-      border: 1px solid #444;
-      padding: 10px;
-      margin-bottom: 14px;
+      display:flex; flex-wrap:wrap; gap:12px; justify-content:center; align-items:center;
+      background:#1a1a1a; border:1px solid #444; padding:10px; margin-bottom:14px;
     }
-    .controls label{display:flex;align-items:center;gap:6px;cursor:pointer}
-    .btn {
-      padding: 6px 10px;
-      border: 1px solid #555;
-      background: #222;
-      color: var(--fg);
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    .controls label { display:flex; align-items:center; gap:6px; cursor:pointer }
+    .btn { padding:6px 10px; border:1px solid #555; background:#222; color:var(--fg); border-radius:4px; cursor:pointer }
     .btn:hover { background:#2a2a2a }
 
-    /* Section blocks: collapsed by default */
-    details {
-      margin-bottom: 12px;
-      border: 1px solid #444;
-      background-color: #222;
-    }
-    summary {
-      cursor: pointer;
-      font-weight: bold;
-      color: var(--accent);
-      padding: 10px 12px;
-      user-select:none;
-    }
-    /* Visual hierarchy titles */
-    .title-show { color: var(--blue); }
-    .title-season { color: var(--green); }
-    .title-item { color: var(--white); }
+    /* Sections */
+    details { margin-bottom:12px; border:1px solid #444; background:#222; }
+    summary { cursor:pointer; font-weight:bold; color:var(--accent); padding:10px 12px; user-select:none }
+    .block-show { background:var(--block-show); }
+    .block-season { background:var(--block-season); }
+    .block-item { background:var(--block-item); }
+    .title-show { color:var(--blue); }
+    .title-season { color:var(--green); }
+    .title-item { color:var(--white); }
 
-    /* Level shading per container */
-    .block-show { background: var(--block-show); }
-    .block-season { background: var(--block-season); }
-    .block-item { background: var(--block-item); }
+    /* Flex “tables” */
+    .flex-table { display:grid; gap:6px; padding:8px 12px; align-items:start }
+    .cell { padding:6px 8px; border:1px solid #555; background:#1a1a1a; min-width:0 }
+    .flex-header .cell { background:#222; color:var(--accent); font-weight:bold }
+    .cell:hover { background:#333 }
 
-    /* Flex rows for better TV readability (no horizontal scroll) */
-    .flex-table {
-      display: grid;
-      grid-template-columns: 60px 160px 1fr 120px 160px; /* default layout for episodes/movies */
-      gap: 6px;
-      padding: 8px 12px;
-      align-items: start;
-    }
-    .flex-row { display: contents; }
-    .cell { padding: 6px 8px; border: 1px solid #555; background:#1a1a1a; }
-    .cell.desc { grid-column: 3; } /* wider description */
-    .flex-header .cell { background:#222; color: var(--accent); font-weight:bold; }
-    .flex-table .cell:hover { background:#333; }
+    /* Layouts */
+    .flex-table.show    { grid-template-columns: 120px 1fr 140px 140px 120px 1fr; }
+    .flex-table.season  { grid-template-columns: 100px 120px 1fr 200px; }
+    .flex-table.episodes{ grid-template-columns: 60px 220px 140px 1fr 110px 260px 220px; }
+    .flex-table.movies  { grid-template-columns: 120px 220px 1fr 140px 100px 110px 260px 220px; }
 
-    /* Show header table */
-    .flex-table.show {
-      grid-template-columns: 120px 1fr 180px 140px 120px 1fr;
-    }
-    /* Season header table */
-    .flex-table.season {
-      grid-template-columns: 100px 120px 1fr 160px;
-    }
-    /* Episode rows table */
-    .flex-table.episodes {
-      grid-template-columns: 60px 220px 140px 1fr 110px 130px 130px 110px 110px 80px 160px;
-    }
-    /* Movies table */
-    .flex-table.movies {
-      grid-template-columns: 120px 220px 1fr 140px 100px 110px 130px 130px 110px 110px 80px 160px;
-    }
-
-    /* Icon sets */
+    /* Icons and links */
     .icons { display:flex; flex-wrap:wrap; gap:8px; align-items:center }
-    .icon-btn {
-      border: 1px solid #555; background:#222; color: var(--fg);
-      border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.95em;
+    .icon-link {
+      display:flex; align-items:center; gap:6px;
+      border:1px solid #555; background:#222; color:var(--fg);
+      border-radius:4px; padding:4px 8px; text-decoration:none; font-size:0.9em;
     }
-    .icon-btn:hover { background:#2a2a2a }
-    .icon-link { text-decoration:none; border:1px solid #555; background:#222; color: var(--fg); border-radius:4px; padding:4px 8px; }
     .icon-link:hover { background:#2a2a2a }
+    .logo { width:18px; height:18px; display:inline-block }
 
-    /* Status badges */
-    .status-watched { color: var(--green); font-weight: bold; }
-    .status-watching { color: var(--blue); font-weight: bold; }
-    .status-none { color: var(--red); font-weight: bold; }
+    /* Status */
+    .status-watched { color:var(--green); font-weight:bold }
+    .status-watching { color:var(--blue); font-weight:bold }
+    .status-none { color:var(--red); font-weight:bold }
 
-    /* Hidden utility */
-    .hidden{ display:none !important }
-    .error { color: var(--red); padding: 8px 12px; background:#1a1a1a; border:1px solid #444; margin-top:8px }
-
-    /* Links inside cells */
-    .cell a { color: var(--accent); word-break: break-all }
+    /* Error */
+    .error { color:var(--red); padding:8px 12px; background:#1a1a1a; border:1px solid #444; margin-top:8px }
   </style>
 </head>
 <body>
 
 <h1>The Boys Shows</h1>
 
-<!-- Global controls -->
 <div class="controls">
-  <label><input type="checkbox" id="hideComplete"> <span>Hide complete (✅ watched)</span></label>
-  <label><input type="checkbox" id="watchingOnly"> <span>Show “watching” only (hide ✅ and ❌)</span></label>
+  <label><input type="checkbox" id="hideComplete"> Hide complete (✅ watched)</label>
+  <label><input type="checkbox" id="watchingOnly"> Watching only (⏳)</label>
   <button class="btn" id="collapseAll">Collapse all</button>
   <button class="btn" id="expandAll">Expand all</button>
-  <button class="btn" id="clearStatuses">Clear local statuses</button>
+  <button class="btn" id="clearStatuses">Clear statuses</button>
 </div>
 
 <details class="block-show" id="showsSection">
@@ -151,10 +95,10 @@
 <div id="errors"></div>
 
 <script>
-/* Config */
+/* Data source */
 const DATA_URL = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/show_and_movie_data.tile.txt';
 
-/* Base link builders */
+/* Provider link builders */
 const linkBuilders = {
   tmdbShow: id => `https://www.themoviedb.org/tv/${id}`,
   tmdbMovie: id => `https://www.themoviedb.org/movie/${id}`,
@@ -168,58 +112,29 @@ const linkBuilders = {
   nunflixMovie: id => `https://nunflix.cc/watch/movie/${id}`
 };
 
-/* Icons by type */
-const ICONS = {
-  status: {
-    watching: '⏳',
-    watched: '✅',
-    unmark: '❌'
-  },
-  link: {
-    TMDB: '🌐',
-    VidJoy: '📺',
-    VidSrc: '📺',
-    Mapple: '🌐',
-    NunFlix: '🎬'
-  },
-  app: {
-    Netflix: '🅽',
-    Prime: '🅿',
-    Disney: '🅳'
-  },
-  misc: {
-    TBD: '❓'
-  }
+/* Branded SVG icons (inline, self-contained) */
+const icons = {
+  tmdb:   `<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" rx="3" fill="#01d277"/><path d="M4 5h10v8H4z" fill="#0b3"/><circle cx="9" cy="9" r="3" fill="#fff"/></svg>`,
+  vidjoy: `<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" rx="3" fill="#222"/><polygon points="6,4 14,9 6,14" fill="#e91e63"/></svg>`,
+  vidsrc: `<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" rx="3" fill="#333"/><rect x="4" y="5" width="10" height="8" fill="#00bcd4"/><rect x="4" y="13" width="10" height="2" fill="#555"/></svg>`,
+  mapple: `<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" rx="3" fill="#2e7d32"/><path d="M9 3c2 2 4 2 5 4-2 1-3 3-5 6-2-3-3-5-5-6 1-2 3-2 5-4z" fill="#a5d6a7"/></svg>`,
+  nunflix:`<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" rx="3" fill="#111"/><path d="M5 2h3l5 14h-3z" fill="#c2185b"/></svg>`,
+  netflix:`<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" fill="#000"/><path d="M5 2h3l5 14h-3z" fill="#E50914"/></svg>`,
+  prime:  `<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" fill="#232f3e"/><path d="M3 9h12v2H3z" fill="#00a8e1"/><path d="M5 6h8v6H5z" fill="#00a8e1" opacity="0.3"/></svg>`,
+  disney: `<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><rect width="18" height="18" fill="#113ccf"/><path d="M4 11c3-5 9-5 10 1" stroke="#fff" stroke-width="2" fill="none"/></svg>`,
+  search: `<svg class="logo" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="5" stroke="#eee" stroke-width="2" fill="none"/><line x1="12" y1="12" x2="16" y2="16" stroke="#eee" stroke-width="2"/></svg>`
 };
 
-/* Utility: escape HTML */
+/* Utilities */
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
-
-/* LocalStorage for statuses: key schema */
 function keyEpisode(tmdbId, season, ep){ return `status:ep:${tmdbId}:${season}:${ep}` }
 function keyMovie(tmdbId){ return `status:mv:${tmdbId}` }
+function normalizeStatus(s){ const v=(s||'').toLowerCase(); if(v.includes('watched')) return 'watched'; if(v.includes('watching')) return 'watching'; return 'none'; }
+function statusClass(s){ return s==='watched' ? 'status-watched' : s==='watching' ? 'status-watching' : 'status-none' }
+function reportError(msg){ const errors=document.getElementById('errors'); const div=document.createElement('div'); div.className='error'; div.textContent=msg; errors.appendChild(div); }
+const filters = { hideComplete:false, watchingOnly:false };
 
-/* Status helpers */
-function statusClass(s){
-  const v = (s||'').toLowerCase();
-  if (v.includes('watched')) return 'status-watched';
-  if (v.includes('watching')) return 'status-watching';
-  return 'status-none';
-}
-function normalizeStatus(s){
-  const v = (s||'').toLowerCase();
-  if (v.includes('watched')) return 'watched';
-  if (v.includes('watching')) return 'watching';
-  return 'none';
-}
-
-/* Global filters */
-const filters = {
-  hideComplete: false,
-  watchingOnly: false
-};
-
-/* Parse data with validation and resilience */
+/* Data load & robust parse */
 async function loadData(){
   let text;
   try{
@@ -228,7 +143,8 @@ async function loadData(){
     text = await res.text();
   }catch(err){
     reportError(`Failed to load data file: ${err.message}`);
-    return { shows: {}, movies: [] };
+    console.error(err);
+    return { shows:{}, movies:[] };
   }
 
   const lines = text.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
@@ -238,7 +154,7 @@ async function loadData(){
   let currentShow = null;
   let currentSeason = null;
 
-  for (let i=0;i<lines.length;i++){
+  for (let i=0; i<lines.length; i++){
     const line = lines[i];
     const parts = line.split('|').map(p => p.trim());
     const type = parts[0];
@@ -246,7 +162,6 @@ async function loadData(){
     try{
       switch(type){
         case 'show': {
-          // show|tmdb_id|name|overview|date|status|source|schedule|tmdb_url_link
           if (parts.length < 9) throw new Error('show: insufficient fields');
           const [, id, name, overview, date, status, source, schedule, url] = parts;
           currentShow = { id, name, overview, date, status, source, schedule, url, seasons: [] };
@@ -255,25 +170,22 @@ async function loadData(){
           break;
         }
         case 'season': {
-          // season|tmdb_id|seasonNum|year|overview|watchStatus
           if (parts.length < 6) throw new Error('season: insufficient fields');
           const [, showId, seasonNum, year, overview, watchStatus] = parts;
           if (!shows[showId]) throw new Error(`season references unknown showId: ${showId}`);
-          currentSeason = { seasonNum, year, overview, watchStatus, episodes: [] };
+          currentSeason = { seasonNum, year, overview, watchStatus, episodes: [], showId };
           shows[showId].seasons.push(currentSeason);
           break;
         }
         case 'episode': {
-          // episode|tmdb_id|epNum|title|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
           if (parts.length < 13) throw new Error('episode: insufficient fields');
           const [, showId, epNum, title, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = parts;
           if (!currentSeason) throw new Error('episode before season');
-          if (!shows[showId]) throw new Error(`episode references unknown showId: ${showId}`);
+          if (currentSeason.showId !== showId) console.warn(`Episode showId mismatch at line ${i+1}`);
           currentSeason.episodes.push({ showId, epNum, title, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
           break;
         }
         case 'movie': {
-          // movie|tmdb_id|name|overview|releaseDate|rating|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
           if (parts.length < 13) throw new Error('movie: insufficient fields');
           const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = parts;
           movies.push({ id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
@@ -287,124 +199,105 @@ async function loadData(){
     }
   }
 
+  console.log('Parsed data:', { shows:Object.keys(shows).length, movies:movies.length });
   return { shows, movies };
 }
 
-/* Error reporting */
-function reportError(msg){
-  const errors = document.getElementById('errors');
-  const div = document.createElement('div');
-  div.className = 'error';
-  div.textContent = msg;
-  errors.appendChild(div);
-}
-
-/* Build icon link group for episodes/movies */
-function buildLinksForEpisode(ep, seasonNum){
-  const id = ep.showId;
-  const s = seasonNum;
-  const e = ep.epNum;
-  const nodes = [];
-
-  // TMDB
-  nodes.push(aLink(ICONS.link.TMDB+' TMDB', linkBuilders.tmdbShow(id)));
-
-  // VidJoy / VidSrc / Mapple / NunFlix
-  nodes.push(aLink(ICONS.link.VidJoy+' VidJoy', linkBuilders.vidjoyTv(id,s,e)));
-  nodes.push(aLink(ICONS.link.VidSrc+' VidSrc', linkBuilders.vidsrcTv(id,s,e)));
-  nodes.push(aLink(ICONS.link.Mapple+' Mapple', linkBuilders.mappleTv(id,s,e)));
-  nodes.push(aLink(ICONS.link.NunFlix+' NunFlix', linkBuilders.nunflixTv(id,s,e)));
-
-  // App generic search/open (web)
-  nodes.push(aLink('🔎 Search', `https://www.google.com/search?q=${encodeURIComponent(ep.title)}+${encodeURIComponent(ep.showId)}+Season+${encodeURIComponent(s)}+Episode+${encodeURIComponent(e)}`));
-
-  return nodes;
-}
-
-function buildLinksForMovie(mv){
-  const nodes = [];
-  nodes.push(aLink(ICONS.link.TMDB+' TMDB', linkBuilders.tmdbMovie(mv.id)));
-  nodes.push(aLink(ICONS.link.VidJoy+' VidJoy', linkBuilders.vidjoyMovie(mv.id)));
-  nodes.push(aLink(ICONS.link.VidSrc+' VidSrc', linkBuilders.vidsrcMovie(mv.id)));
-  nodes.push(aLink(ICONS.link.Mapple+' Mapple', linkBuilders.mappleMovie(mv.id)));
-  nodes.push(aLink(ICONS.link.NunFlix+' NunFlix', linkBuilders.nunflixMovie(mv.id)));
-  nodes.push(aLink('🔎 Search', `https://www.google.com/search?q=${encodeURIComponent(mv.name)}+${encodeURIComponent(mv.id)}`));
-  return nodes;
-}
-
-/* Create anchor element */
-function aLink(text, href){
+/* Link element with inline SVG */
+function aLink(label, href, svg){
   const a = document.createElement('a');
   a.className = 'icon-link';
   a.href = href;
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
-  a.textContent = text;
+  if (svg){
+    const span = document.createElement('span');
+    span.innerHTML = svg;
+    a.appendChild(span.firstChild);
+  }
+  const text = document.createElement('span');
+  text.textContent = label;
+  a.appendChild(text);
   return a;
 }
 
-/* Status toggle buttons with localStorage persistence */
-function statusButtons({ key, initial }){
-  const wrap = document.createElement('div');
-  wrap.className = 'icons';
+/* Android TV deep links with web-search fallback for episodes */
+function appDeepLinksForEpisode(ep, seasonNum){
+  const wrap = document.createElement('div'); wrap.className='icons';
+  const title = `${ep.title} S${seasonNum}E${ep.epNum}`;
 
-  const current = normalizeStatus(localStorage.getItem(key) || initial);
+  const n = aLink('Netflix', `intent://details?titleId=${ep.showId}#Intent;scheme=netflix;package=com.netflix.ninja;end`, icons.netflix);
+  n.addEventListener('click', () => setTimeout(() => window.open(`https://www.google.com/search?q=${encodeURIComponent(title)}+Netflix`, '_blank'), 600));
+  wrap.appendChild(n);
 
-  const lbl = document.createElement('span');
-  lbl.className = statusClass(current);
-  lbl.textContent = current === 'watched' ? `${ICONS.status.watched} watched`
-                   : current === 'watching' ? `${ICONS.status.watching} watching`
-                   : `${ICONS.status.unmark} none`;
-  wrap.appendChild(lbl);
+  const p = aLink('Prime Video', `intent://details?asin=${ep.showId}#Intent;scheme=primevideo;package=com.amazon.avod.thirdpartyclient;end`, icons.prime);
+  p.addEventListener('click', () => setTimeout(() => window.open(`https://www.google.com/search?q=${encodeURIComponent(title)}+Prime+Video`, '_blank'), 600));
+  wrap.appendChild(p);
 
-  const btnWatch = document.createElement('button');
-  btnWatch.className = 'icon-btn';
-  btnWatch.textContent = ICONS.status.watching+' watching';
-  btnWatch.onclick = () => { localStorage.setItem(key,'watching'); updateStatus(lbl,'watching') };
-  wrap.appendChild(btnWatch);
+  const d = aLink('Disney+', `intent://title/${ep.showId}#Intent;scheme=disneyplus;package=com.disney.disneyplus;end`, icons.disney);
+  d.addEventListener('click', () => setTimeout(() => window.open(`https://www.google.com/search?q=${encodeURIComponent(title)}+Disney+Plus`, '_blank'), 600));
+  wrap.appendChild(d);
 
-  const btnDone = document.createElement('button');
-  btnDone.className = 'icon-btn';
-  btnDone.textContent = ICONS.status.watched+' watched';
-  btnDone.onclick = () => { localStorage.setItem(key,'watched'); updateStatus(lbl,'watched') };
-  wrap.appendChild(btnDone);
-
-  const btnClear = document.createElement('button');
-  btnClear.className = 'icon-btn';
-  btnClear.textContent = ICONS.status.unmark+' unmark';
-  btnClear.onclick = () => { localStorage.removeItem(key); updateStatus(lbl,'none') };
-  wrap.appendChild(btnClear);
+  // General search
+  wrap.appendChild(aLink('Search', `https://www.google.com/search?q=${encodeURIComponent(title)}`, icons.search));
 
   return wrap;
 }
-function updateStatus(label, status){
-  label.className = statusClass(status);
-  label.textContent = status === 'watched' ? `${ICONS.status.watched} watched`
-                    : status === 'watching' ? `${ICONS.status.watching} watching`
-                    : `${ICONS.status.unmark} none`;
+
+/* Android TV deep links with web-search fallback for movies */
+function appDeepLinksForMovie(mv){
+  const wrap = document.createElement('div'); wrap.className='icons';
+  const title = mv.name;
+
+  const n = aLink('Netflix', `intent://details?titleId=${mv.id}#Intent;scheme=netflix;package=com.netflix.ninja;end`, icons.netflix);
+  n.addEventListener('click', () => setTimeout(() => window.open(`https://www.google.com/search?q=${encodeURIComponent(title)}+Netflix`, '_blank'), 600));
+  wrap.appendChild(n);
+
+  const p = aLink('Prime Video', `intent://details?asin=${mv.id}#Intent;scheme=primevideo;package=com.amazon.avod.thirdpartyclient;end`, icons.prime);
+  p.addEventListener('click', () => setTimeout(() => window.open(`https://www.google.com/search?q=${encodeURIComponent(title)}+Prime+Video`, '_blank'), 600));
+  wrap.appendChild(p);
+
+  const d = aLink('Disney+', `intent://title/${mv.id}#Intent;scheme=disneyplus;package=com.disney.disneyplus;end`, icons.disney);
+  d.addEventListener('click', () => setTimeout(() => window.open(`https://www.google.com/search?q=${encodeURIComponent(title)}+Disney+Plus`, '_blank'), 600));
+  wrap.appendChild(d);
+
+  wrap.appendChild(aLink('Search', `https://www.google.com/search?q=${encodeURIComponent(title)}`, icons.search));
+  return wrap;
 }
 
-/* Global filter logic */
+/* Status controls */
+function statusButtons({ key, initial }){
+  const wrap = document.createElement('div'); wrap.className='icons';
+  const cur = normalizeStatus(localStorage.getItem(key) || initial);
+  const lbl = document.createElement('span'); lbl.className = statusClass(cur); lbl.textContent = cur; wrap.appendChild(lbl);
+
+  const btnWatching = aLink('⏳ watching', '#');
+  btnWatching.addEventListener('click', (e)=>{ e.preventDefault(); localStorage.setItem(key,'watching'); lbl.className=statusClass('watching'); lbl.textContent='watching'; });
+  const btnWatched = aLink('✅ watched', '#');
+  btnWatched.addEventListener('click', (e)=>{ e.preventDefault(); localStorage.setItem(key,'watched'); lbl.className=statusClass('watched'); lbl.textContent='watched'; });
+  const btnClear = aLink('❌ unmark', '#');
+  btnClear.addEventListener('click', (e)=>{ e.preventDefault(); localStorage.removeItem(key); lbl.className=statusClass('none'); lbl.textContent='none'; });
+
+  wrap.appendChild(btnWatching);
+  wrap.appendChild(btnWatched);
+  wrap.appendChild(btnClear);
+  return wrap;
+}
+
+/* Filter logic */
 function shouldHideByFilters(status){
   const s = normalizeStatus(status);
-  if (filters.watchingOnly){
-    // keep only 'watching'
-    return s !== 'watching';
-  }
-  if (filters.hideComplete){
-    // hide 'watched'
-    return s === 'watched';
-  }
+  if (filters.watchingOnly) return s !== 'watching';
+  if (filters.hideComplete) return s === 'watched';
   return false;
 }
 
-/* Render functions */
+/* Render: shows, seasons, episodes */
 function renderShows(shows){
   const container = document.getElementById('shows');
   container.innerHTML = '';
 
   Object.values(shows).forEach(show => {
-    // SHOW BLOCK
     const showDetails = document.createElement('details');
     showDetails.open = false;
     showDetails.className = 'block-show';
@@ -412,27 +305,23 @@ function renderShows(shows){
     showSummary.innerHTML = `<span class="title-show">${esc(show.name)}</span>`;
     showDetails.appendChild(showSummary);
 
-    // Show header as flex grid
-    const showHeader = document.createElement('div');
-    showHeader.className = 'flex-table show flex-header';
-    const headers = ['TMDB ID','Overview','Date','Status','Source','Schedule'];
-    const values  = [show.id, show.overview, show.date, show.status, show.source, show.schedule];
-    headers.forEach((h, idx) => {
-      const c = document.createElement('div'); c.className='cell'; c.textContent=h; showHeader.appendChild(c);
-      const v = document.createElement('div'); v.className='cell'; v.innerHTML=esc(values[idx] ?? '');
-      showHeader.appendChild(v);
+    // Show header grid
+    const sh = document.createElement('div'); sh.className='flex-table show flex-header';
+    const shHeaders = ['TMDB ID','Overview','Date','Status','Source','Schedule'];
+    const shValues  = [show.id, show.overview, show.date, show.status, show.source, show.schedule];
+    shHeaders.forEach((h, i) => {
+      const hcell = document.createElement('div'); hcell.className='cell'; hcell.textContent=h; sh.appendChild(hcell);
+      const vcell = document.createElement('div'); vcell.className='cell'; vcell.innerHTML=esc(shValues[i] ?? ''); sh.appendChild(vcell);
     });
-    showDetails.appendChild(showHeader);
+    showDetails.appendChild(sh);
 
-    // Show link row
-    const showLinks = document.createElement('div');
-    showLinks.className = 'icons';
-    // Primary TMDB (from file if present, else builder)
+    // TMDB link row
+    const showLinks = document.createElement('div'); showLinks.className='icons';
     const tmdbUrl = show.url ? show.url : linkBuilders.tmdbShow(show.id);
-    showLinks.appendChild(aLink(ICONS.link.TMDB+' TMDB', tmdbUrl));
+    showLinks.appendChild(aLink('TMDB', tmdbUrl, icons.tmdb));
     showDetails.appendChild(showLinks);
 
-    // SEASONS
+    // Seasons
     show.seasons.forEach(season => {
       const seasonDetails = document.createElement('details');
       seasonDetails.open = false;
@@ -442,68 +331,57 @@ function renderShows(shows){
       seasonDetails.appendChild(seasonSummary);
 
       // Season header
-      const sh = document.createElement('div');
-      sh.className = 'flex-table season flex-header';
-      const shHeaders = ['Season #','Year','Overview','Watch status'];
-      const shValues = [season.seasonNum, season.year, season.overview, season.watchStatus];
-      shHeaders.forEach((h, idx) => {
-        const c = document.createElement('div'); c.className='cell'; c.textContent=h; sh.appendChild(c);
-        const v = document.createElement('div'); v.className='cell'; 
-        if (idx===3){
+      const seH = document.createElement('div'); seH.className='flex-table season flex-header';
+      const seHeaders = ['Season #','Year','Overview','Watch status'];
+      const seValues = [season.seasonNum, season.year, season.overview, season.watchStatus];
+      seHeaders.forEach((h, idx) => {
+        const hcell = document.createElement('div'); hcell.className='cell'; h.textContent=h; hcell.textContent=h; seH.appendChild(hcell);
+        const vcell = document.createElement('div'); vcell.className='cell';
+        if (idx === 3){
           const sKey = `status:season:${show.id}:${season.seasonNum}`;
-          const wrap = statusButtons({ key: sKey, initial: season.watchStatus });
-          v.appendChild(wrap);
-        }else{
-          v.innerHTML = esc(shValues[idx] ?? '');
+          vcell.appendChild(statusButtons({ key: sKey, initial: season.watchStatus }));
+        } else {
+          vcell.innerHTML = esc(seValues[idx] ?? '');
         }
-        sh.appendChild(v);
+        seH.appendChild(vcell);
       });
-      seasonDetails.appendChild(sh);
+      seasonDetails.appendChild(seH);
 
-      // EPISODES TABLE (flex layout)
+      // Episodes grid
       if (season.episodes.length){
-        const epTable = document.createElement('div');
-        epTable.className = 'flex-table episodes';
-        // Header
-        const headers = ['#','Title','Date','Description','Runtime','Source','VidJoy','VidSrc','Mapple','NunFlix','Status'];
-        headers.forEach(h => { const c = document.createElement('div'); c.className='cell'; c.textContent=h; epTable.appendChild(c); });
+        const epGrid = document.createElement('div'); epGrid.className='flex-table episodes';
+        ['#','Title','Date','Description','Runtime','Links','Status'].forEach(h => {
+          const c = document.createElement('div'); c.className='cell'; c.textContent=h; epGrid.appendChild(c);
+        });
 
-        // Rows
         season.episodes.forEach(ep => {
           const statusKey = keyEpisode(ep.showId, season.seasonNum, ep.epNum);
           const cur = normalizeStatus(localStorage.getItem(statusKey) || ep.watchStatus);
-
-          // Filter visibility
           if (shouldHideByFilters(cur)) return;
 
-          const vals = [
-            esc(ep.epNum),
-            esc(ep.title),
-            esc(ep.date),
-            esc(ep.desc),
-            esc(ep.runtime),
-            esc(ep.source)
-          ];
-          vals.forEach(v => {
-            const c = document.createElement('div'); c.className='cell'; c.innerHTML=v; epTable.appendChild(c);
+          [esc(ep.epNum), esc(ep.title), esc(ep.date), esc(ep.desc), esc(ep.runtime)].forEach(v => {
+            const c = document.createElement('div'); c.className='cell'; c.innerHTML=v; epGrid.appendChild(c);
           });
 
-          // Link buttons
+          // Links: providers + app deep links
           const linkCell = document.createElement('div'); linkCell.className='cell';
-          const links = buildLinksForEpisode(ep, season.seasonNum);
-          const iconWrap = document.createElement('div'); iconWrap.className='icons';
-          links.forEach(node => iconWrap.appendChild(node));
-          linkCell.appendChild(iconWrap);
-          epTable.appendChild(linkCell);
+          const linkWrap = document.createElement('div'); linkWrap.className='icons';
+          linkWrap.appendChild(aLink('TMDB',   linkBuilders.tmdbShow(ep.showId), icons.tmdb));
+          linkWrap.appendChild(aLink('VidJoy', linkBuilders.vidjoyTv(ep.showId, season.seasonNum, ep.epNum), icons.vidjoy));
+          linkWrap.appendChild(aLink('VidSrc', linkBuilders.vidsrcTv(ep.showId, season.seasonNum, ep.epNum), icons.vidsrc));
+          linkWrap.appendChild(aLink('Mapple', linkBuilders.mappleTv(ep.showId, season.seasonNum, ep.epNum), icons.mapple));
+          linkWrap.appendChild(aLink('NunFlix',linkBuilders.nunflixTv(ep.showId, season.seasonNum, ep.epNum), icons.nunflix));
+          linkWrap.appendChild(appDeepLinksForEpisode(ep, season.seasonNum));
+          linkCell.appendChild(linkWrap);
+          epGrid.appendChild(linkCell);
 
-          // Status controls
+          // Status cell
           const stCell = document.createElement('div'); stCell.className='cell';
-          const stWrap = statusButtons({ key: statusKey, initial: ep.watchStatus });
-          stCell.appendChild(stWrap);
-          epTable.appendChild(stCell);
+          stCell.appendChild(statusButtons({ key: statusKey, initial: ep.watchStatus }));
+          epGrid.appendChild(stCell);
         });
 
-        seasonDetails.appendChild(epTable);
+        seasonDetails.appendChild(epGrid);
       }
 
       showDetails.appendChild(seasonDetails);
@@ -513,17 +391,14 @@ function renderShows(shows){
   });
 }
 
+/* Render: movies */
 function renderMovies(movies){
   const container = document.getElementById('movies');
   container.innerHTML = '';
 
-  // Movies table
-  const mvTable = document.createElement('div');
-  mvTable.className = 'flex-table movies';
-
-  // Header
-  ['TMDB ID','Name','Overview','Release','Rating','Runtime','Source','VidJoy','VidSrc','Mapple','NunFlix','Status'].forEach(h => {
-    const c = document.createElement('div'); c.className='cell'; c.textContent=h; mvTable.appendChild(c);
+  const mvGrid = document.createElement('div'); mvGrid.className='flex-table movies';
+  ['TMDB ID','Name','Overview','Release','Rating','Runtime','Links','Status'].forEach(h => {
+    const c = document.createElement('div'); c.className='cell'; c.textContent=h; mvGrid.appendChild(c);
   });
 
   movies.forEach(mv => {
@@ -531,59 +406,49 @@ function renderMovies(movies){
     const cur = normalizeStatus(localStorage.getItem(statusKey) || mv.watchStatus);
     if (shouldHideByFilters(cur)) return;
 
-    const vals = [
-      esc(mv.id),
-      esc(mv.name),
-      esc(mv.overview),
-      esc(mv.releaseDate),
-      esc(mv.rating),
-      esc(mv.runtime),
-      esc(mv.source)
-    ];
-    vals.forEach(v => { const c = document.createElement('div'); c.className='cell'; c.innerHTML=v; mvTable.appendChild(c); });
+    [esc(mv.id), esc(mv.name), esc(mv.overview), esc(mv.releaseDate), esc(mv.rating), esc(mv.runtime)].forEach(v => {
+      const c = document.createElement('div'); c.className='cell'; c.innerHTML=v; mvGrid.appendChild(c);
+    });
 
-    // Link buttons
+    // Links
     const linkCell = document.createElement('div'); linkCell.className='cell';
-    const links = buildLinksForMovie(mv);
-    const iconWrap = document.createElement('div'); iconWrap.className='icons';
-    links.forEach(node => iconWrap.appendChild(node));
-    linkCell.appendChild(iconWrap);
-    mvTable.appendChild(linkCell);
+    const linkWrap = document.createElement('div'); linkWrap.className='icons';
+    linkWrap.appendChild(aLink('TMDB',   linkBuilders.tmdbMovie(mv.id), icons.tmdb));
+    linkWrap.appendChild(aLink('VidJoy', linkBuilders.vidjoyMovie(mv.id), icons.vidjoy));
+    linkWrap.appendChild(aLink('VidSrc', linkBuilders.vidsrcMovie(mv.id), icons.vidsrc));
+    linkWrap.appendChild(aLink('Mapple', linkBuilders.mappleMovie(mv.id), icons.mapple));
+    linkWrap.appendChild(aLink('NunFlix',linkBuilders.nunflixMovie(mv.id), icons.nunflix));
+    linkWrap.appendChild(appDeepLinksForMovie(mv));
+    linkCell.appendChild(linkWrap);
+    mvGrid.appendChild(linkCell);
 
-    // Status controls
+    // Status
     const stCell = document.createElement('div'); stCell.className='cell';
-    const stWrap = statusButtons({ key: statusKey, initial: mv.watchStatus });
-    stCell.appendChild(stWrap);
-    mvTable.appendChild(stCell);
+    stCell.appendChild(statusButtons({ key: statusKey, initial: mv.watchStatus }));
+    mvGrid.appendChild(stCell);
   });
 
-  container.appendChild(mvTable);
+  container.appendChild(mvGrid);
 }
 
-/* Collapse/expand helpers */
-function setAllDetails(open){
-  document.querySelectorAll('details').forEach(d => d.open = !!open);
-}
-
-/* Wire up global controls */
+/* Controls */
+function setAllDetails(open){ document.querySelectorAll('details').forEach(d => d.open = !!open); }
 function initControls(){
   const hideComplete = document.getElementById('hideComplete');
   const watchingOnly = document.getElementById('watchingOnly');
-  hideComplete.onchange = () => { filters.hideComplete = hideComplete.checked; refresh(); };
-  watchingOnly.onchange = () => { filters.watchingOnly = watchingOnly.checked; refresh(); };
-
-  document.getElementById('collapseAll').onclick = () => setAllDetails(false);
-  document.getElementById('expandAll').onclick = () => setAllDetails(true);
-  document.getElementById('clearStatuses').onclick = () => {
+  hideComplete.addEventListener('change', ()=>{ filters.hideComplete = hideComplete.checked; refresh(); });
+  watchingOnly.addEventListener('change', ()=>{ filters.watchingOnly = watchingOnly.checked; refresh(); });
+  document.getElementById('collapseAll').addEventListener('click', ()=> setAllDetails(false));
+  document.getElementById('expandAll').addEventListener('click', ()=> setAllDetails(true));
+  document.getElementById('clearStatuses').addEventListener('click', ()=>{
     Object.keys(localStorage).forEach(k => { if (k.startsWith('status:')) localStorage.removeItem(k) });
     refresh();
-  };
+  });
 }
 
-/* Refresh */
+/* Refresh from cache (apply filters fast) */
 let cache = { shows:{}, movies:[] };
-async function refresh(){
-  // Re-render from cache to apply filters quickly
+function refresh(){
   document.getElementById('shows').innerHTML = '';
   document.getElementById('movies').innerHTML = '';
   renderShows(cache.shows);
@@ -592,16 +457,16 @@ async function refresh(){
 
 /* Init */
 (async function(){
-  initControls();
   try{
+    initControls();
     cache = await loadData();
     renderShows(cache.shows);
     renderMovies(cache.movies);
-    // Start collapsed by default
-    setAllDetails(false);
+    setAllDetails(false); // collapsed by default
     console.log('Data loaded:', { shows:Object.keys(cache.shows).length, movies:cache.movies.length });
   }catch(err){
     reportError(`Runtime error: ${err.message}`);
+    console.error(err);
   }
 })();
 </script>
