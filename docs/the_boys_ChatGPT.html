@@ -3,23 +3,21 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>The Boys Shows • Dark UI (TBS-DARK-3.0)</title>
-
+<title>The Boys Shows • Dark UI (TBS-DARK-3.1)</title>
 <!--
   the_boys_ChatGPT.html
   Dark, high-contrast UI with show→season→episode accordions.
-  Strictly includes your CONFIG/parser/globals (DATA_URL, NS, keyFor, get/set, parseDataFile, toggleSection/Complete/Watched).
-  Version: 3.0  |  2025-10-16
+  Includes your CONFIG/parser/globals (DATA_URL, NS, keyFor/get/set, parseDataFile, toggleSection/Complete/Watched)
+  Version: 3.1  |  2025-10-16
 -->
 
 <style>
   :root{
-    /* Dark palette + requested hierarchy */
     --bg: #121212;
     --panel: #1b1b1b;
     --panel2:#202020;
 
-    /* zebra bands for blocks (requested) */
+    /* zebra bands */
     --band-show:   #333333; /* shows */
     --band-season: #444444; /* seasons */
     --band-ep:     #555555; /* episodes/movies rows */
@@ -95,7 +93,6 @@
   .thead{ position:sticky; top:0; z-index:1; background:#2a2a2a; }
   .row{
     display:grid;
-    /* responsive: description grows, no horizontal scroll on TVs */
     grid-template-columns: 64px 1.4fr 140px 100px minmax(260px,2fr) 140px 96px 96px 96px 74px 230px;
     align-items:center;
   }
@@ -128,11 +125,10 @@
   a.link{ color:var(--link); text-decoration:none; border-bottom:1px dotted #6fbaff; }
   a.link:focus{ outline:3px solid var(--focus); outline-offset:2px; }
 
-  /* Filters (checkboxes optional; we use buttons, but keep body classes too) */
+  /* Filters via body classes */
   body.hide-complete .status-watched{ display:none !important; }
   body.watching-only .row:not(.status-watching){ display:none !important; }
 
-  /* Responsiveness */
   @media (max-width:1100px){
     .row{ grid-template-columns:58px 1.3fr 128px 90px minmax(220px,2fr) 130px 92px 92px 92px 68px 200px; }
     .row.movie{ grid-template-columns:1.5fr 128px 90px minmax(260px,2fr) 140px 92px 92px 92px 68px 200px; }
@@ -188,21 +184,21 @@
 const DATA_URL = 'show_and_movie_data.tile.txt';  // same folder as HTML
 const NS       = 'ajp.watchstatus';               // localStorage namespace
 
-/* Base link builders (plus your extended baseline set) */
+/* Base link builders (plus the extended baseline set) */
 const links = {
   tmdbShow:   (id)        => `https://www.themoviedb.org/tv/${id}`,
   tmdbMovie:  (id)        => `https://www.themoviedb.org/movie/${id}`,
 
   /* VidJoy + VidSrc (prefer VidJoy first, fallback to VidSrc if needed) */
-  vidjoyTv:   (id,s,e)    => `https://vidjoy.pro/embed/tv/${id}/${s}/${e}`,
-  vidjoyMovie:(id)        => `https://vidjoy.pro/embed/movie/${id}`,
-  vidsrcTv:   (id,s,e)    => `https://vidsrc.net/embed/tv/${id}/${s}/${e}`,
-  vidsrcMovie:(id)        => `https://vidsrc.net/embed/movie/${id}`,
+  vidjoyTv:    (id,s,e)   => `https://vidjoy.pro/embed/tv/${id}/${s}/${e}`,
+  vidjoyMovie: (id)       => `https://vidjoy.pro/embed/movie/${id}`,
+  vidsrcTv:    (id,s,e)   => `https://vidsrc.net/embed/tv/${id}/${s}/${e}`,
+  vidsrcMovie: (id)       => `https://vidsrc.net/embed/movie/${id}`,
 
   /* Mapple + NunFlix */
-  mappleTv:   (id,s,e)    => `https://mapple.tv/watch/tv/${id}/${s}/${e}`,
-  mappleMovie:(id)        => `https://mapple.tv/watch/movie/${id}`,
-  nunflixTv:  (id,s,e)    => `https://nunflix.cc/watch/tv/${id}/${s}/${e}`,
+  mappleTv:    (id,s,e)   => `https://mapple.tv/watch/tv/${id}/${s}/${e}`,
+  mappleMovie: (id)       => `https://mapple.tv/watch/movie/${id}`,
+  nunflixTv:   (id,s,e)   => `https://nunflix.cc/watch/tv/${id}/${s}/${e}`,
   nunflixMovie:(id)       => `https://nunflix.cc/watch/movie/${id}`,
 
   /* Generic search helpers (also used for Netflix/Prime search buttons) */
@@ -215,9 +211,9 @@ const links = {
 /* ---------- UTIL ---------- */
 const qs  = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => [...r.querySelectorAll(s)];
+const toInt = (x) => (x == null || x === '' ? null : parseInt(x, 10));
 
 function keyFor(type, tmdbId, seasonNum = null, epNum = null) {
-  // ajp.watchstatus.show.12345.S1.E2  |  ajp.watchstatus.movie.6789
   let k = `${NS}.${type}.${tmdbId}`;
   if (seasonNum != null) k += `.S${seasonNum}`;
   if (epNum    != null) k += `.E${epNum}`;
@@ -230,14 +226,11 @@ function setStatus(type, tmdbId, seasonNum, epNum, status) {
   localStorage.setItem(keyFor(type, tmdbId, seasonNum, epNum), status);
 }
 
-/* Robust fetch:
-   - Use DATA_URL by default
-   - Accept ?data= override
-   - Try absolute GH Pages + RAW fallbacks */
+/* Robust fetch: local → site paths → RAW; ?data= override supported */
 async function fetchData(force=false){
   const override = new URLSearchParams(location.search).get('data');
   const baseDir  = location.href.substring(0, location.href.lastIndexOf('/')+1);
-  const rawBase  = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/';
+  const RAW_URL  = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/' + DATA_URL;
 
   const candidates = [
     override,
@@ -245,71 +238,145 @@ async function fetchData(force=false){
     baseDir + DATA_URL,
     `/IPTV_Data_Harmonization_System/${DATA_URL}`,
     `/IPTV_Data_Harmonization_System/docs/${DATA_URL}`,
-    `${rawBase}${DATA_URL}`
+    RAW_URL
   ].filter(Boolean);
 
   const tried=[];
-  for(const url of [...new Set(candidates)]){
+  for (const url of [...new Set(candidates)]) {
     try{
-      const r = await fetch(url, {cache: force?'reload':'no-store'});
+      const r = await fetch(url, { cache: force ? 'reload' : 'no-store' });
       tried.push(`${url} [${r.status}]`);
-      if(r.ok){
+      if (r.ok) {
         const txt = await r.text();
-        if(txt && txt.trim()) return {text:txt, used:url, tried};
+        if (txt && txt.trim()) return { text: txt, used: url, tried };
       }
     }catch(e){ tried.push(`${url} [ERR]`); }
   }
-  return {text:null, used:null, tried};
+  return { text: null, used: null, tried };
 }
 
 /* ---------- PARSER ---------- */
-/* Pipe-delimited with possible quoted fields. Lines starting with '#' are comments.
-   Types: show|..., season|..., episode|..., movie|... */
+/* Handles:
+   - show|...
+   - season|tmdb_id|seasonNum|year|overview|watchStatus
+   - episode|tmdb_id|epNum|name|...   (legacy)
+   - episode|tmdb_id|seasonNum|epNum|name|...  (explicit season)
+   - movie|...
+   Ignores section labels: SHOWS / SEASONS / EPISODES / MOVIES
+*/
 function parseDataFile(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  const shows = new Map(); // tmdbId -> {meta, seasons: Map(seasonNum -> {... episodes: []})}
+  const shows = new Map();
   const movies = [];
 
   for (const raw of lines) {
     if (raw.startsWith('#')) continue;
-    const fields = splitPipes(raw);
-    const kind = (fields[0] || '').toLowerCase();
+    const upper = raw.toUpperCase();
+    if (upper === 'SHOWS' || upper === 'SEASONS' || upper === 'EPISODES' || upper === 'MOVIES') continue;
+
+    const f = splitPipes(raw);
+    const kind = (f[0] || '').toLowerCase();
 
     if (kind === 'show') {
       // show|tmdb_id|name|overview|#_of_seasons|date|status|source|schedule|tmdb_url_link
-      const [, id, name, overview, nSeasons, date, status, source, schedule, tmdbUrl] = fields;
-      shows.set(id, {
-        id, name, overview, nSeasons: toInt(nSeasons), date, status, source, schedule, tmdbUrl,
-        seasons: new Map()
-      });
+      const [, id, name, overview, nSeasons, date, status, source, schedule, tmdbUrl] = f;
+      if (!id) continue;
+      if (!shows.has(id)) {
+        shows.set(id, {
+          id, name, overview, nSeasons: toInt(nSeasons), date, status, source, schedule, tmdbUrl,
+          seasons: new Map()
+        });
+      } else {
+        // merge minimal dup
+        const s = shows.get(id);
+        s.name = s.name || name; s.overview = s.overview || overview;
+      }
 
     } else if (kind === 'season') {
       // season|tmdb_id|seasonNum|year|overview|watchStatus
-      const [, showId, seasonNum, year, overview, watchStatus] = fields;
-      const show = shows.get(showId);
+      const [, showId, seasonNum, year, overview, watchStatus] = f;
+      const show = ensureShow(shows, showId);
       if (!show) continue;
-      show.seasons.set(String(seasonNum), { showId, seasonNum: String(seasonNum), year, overview, watchStatus, episodes: [] });
+      const key = String(seasonNum);
+      if (!show.seasons.has(key)) {
+        show.seasons.set(key, { showId, seasonNum: key, year, overview, watchStatus, episodes: [] });
+      } else {
+        const s = show.seasons.get(key);
+        s.year = s.year || year; s.overview = s.overview || overview; s.watchStatus = s.watchStatus || watchStatus;
+      }
 
     } else if (kind === 'episode') {
-      // episode|tmdb_id|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
-      const [, showId, epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = fields;
-      const show = shows.get(showId);
+      /* Support both:
+         legacy:  episode|tmdb|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
+         explicit:episode|tmdb|seasonNum|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
+      */
+      const tmdb = f[1];
+      const show = ensureShow(shows, tmdb);
       if (!show) continue;
-      // Put into the latest season unless your file adds explicit season number
-      const latest = pickLatestSeason(show);
-      if (!latest) continue;
-      latest.episodes.push({ showId, epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
+
+      let idx = 2;
+      let seasonNum, epNum;
+
+      // try to detect explicit season number
+      const maybeSeason = parseInt(f[2], 10);
+      const maybeEp = parseInt(f[3], 10);
+      const looksExplicit = Number.isInteger(maybeSeason) && Number.isInteger(maybeEp);
+
+      if (looksExplicit) {
+        seasonNum = String(maybeSeason);
+        epNum = String(maybeEp);
+        idx = 4;
+      } else {
+        // legacy: no seasonNum; try to use latest OR synthesize S1
+        epNum = String(f[2]);
+        const latest = pickLatestSeason(show);
+        seasonNum = latest ? latest.seasonNum : '1';
+        // ensure season exists
+        if (!show.seasons.has(seasonNum)) {
+          show.seasons.set(seasonNum, { showId: tmdb, seasonNum, year: '', overview: '', watchStatus: '', episodes: [] });
+        }
+        idx = 3;
+      }
+
+      const name    = f[idx++] || '';
+      const date    = f[idx++] || '';
+      const desc    = f[idx++] || '';
+      const runtime = f[idx++] || '';
+      const source  = f[idx++] || '';
+      const vidSrc  = f[idx++] || '';
+      const mapple  = f[idx++] || '';
+      const nunFlix = f[idx++] || '';
+      const tbd     = f[idx++] || '';
+      const watchStatus = f[idx++] || '';
+
+      const season = ensureSeason(show, seasonNum);
+      season.episodes.push({ showId: tmdb, epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
 
     } else if (kind === 'movie') {
       // movie|tmdb_id|name|overview|releaseDate|rating|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
-      const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = fields;
+      const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = f;
       movies.push({ id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
     }
   }
   return { shows, movies };
 }
 
-function splitPipes(line) {  // robust splitter with "quoted|fields"
+function ensureShow(shows, id){
+  if (!id) return null;
+  if (!shows.has(id)) {
+    shows.set(id, { id, name:'', overview:'', nSeasons:null, date:'', status:'', source:'', schedule:'', tmdbUrl:'', seasons:new Map() });
+  }
+  return shows.get(id);
+}
+function ensureSeason(show, seasonNum){
+  const key = String(seasonNum);
+  if (!show.seasons.has(key)) {
+    show.seasons.set(key, { showId: show.id, seasonNum: key, year:'', overview:'', watchStatus:'', episodes:[] });
+  }
+  return show.seasons.get(key);
+}
+
+function splitPipes(line) {  // robust with "quoted|fields"
   const out = []; let cur = '', inQ = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
@@ -320,12 +387,16 @@ function splitPipes(line) {  // robust splitter with "quoted|fields"
   out.push(cur);
   return out.map(s => s.replace(/\\n/g, '\n').trim());
 }
-const toInt = (x) => (x == null || x === '' ? null : parseInt(x, 10));
-function pickLatestSeason(show) {
-  const nums = [...show.seasons.keys()].map(n => parseInt(n, 10)).filter(n => !Number.isNaN(n));
-  if (!nums.length) return null;
-  const max = Math.max(...nums);
+function pickLatestSeason(show){
+  const nums=[...show.seasons.keys()].map(n=>parseInt(n,10)).filter(n=>!Number.isNaN(n));
+  if(!nums.length) return null;
+  const max=Math.max(...nums);
   return show.seasons.get(String(max));
+}
+function esc(s){
+  return String(s ?? '')
+    .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+    .replaceAll('"','&quot;').replaceAll("'","&#39;");
 }
 
 /* ---------- RENDER ---------- */
@@ -339,14 +410,31 @@ function renderAll({ shows, movies }) {
   for (const show of shows.values()) {
     showsRoot.appendChild(renderShow(show));
   }
-  // MOVIES
-  for (const m of movies) {
-    moviesRoot.appendChild(renderMovie(m));
+
+  // MOVIES (header + rows)
+  qs('#moviesCount').textContent = String(movies.length);
+  if (movies.length) {
+    const head = document.createElement('div');
+    head.className = 'table';
+    head.innerHTML = `
+      <div class="thead row">
+        <div class="head">Title</div>
+        <div class="head">Release</div>
+        <div class="head">Length</div>
+        <div class="head">Overview</div>
+        <div class="head">Source</div>
+        <div class="head">VidJoy</div>
+        <div class="head">VidSrc</div>
+        <div class="head">Mapple</div>
+        <div class="head">NunFlix</div>
+        <div class="head">Status / Apps</div>
+      </div>`;
+    moviesRoot.appendChild(head);
   }
+  for (const m of movies) moviesRoot.appendChild(renderMovie(m));
 
   // Counts
   qs('#showsCount').textContent  = String(shows.size);
-  qs('#moviesCount').textContent = String(movies.length);
 }
 
 function renderShow(show) {
@@ -514,24 +602,15 @@ function toggle(targetEl) {
   if (chev) chev.textContent = expanded ? '▸' : '▾';
   if (body) body.style.display = expanded ? 'none' : '';
 }
-
-// Exposed global names you requested
 window.toggleSection = function (el) { toggle(el); };
-window.toggleComplete = function () {
-  // maintain body class for compatibility
-  const hide = true; // if you later wire checkboxes, read them here
-  document.body.classList.toggle('hide-complete');
-};
-window.toggleWatched = function () {
-  document.body.classList.toggle('watching-only');
-};
+window.toggleComplete = function () { document.body.classList.toggle('hide-complete'); };
+window.toggleWatched  = function () { document.body.classList.toggle('watching-only'); };
 
 /* ---------- INIT + DELEGATED EVENTS ---------- */
 function init() {
-  // Card accordions collapse by default (as requested)
-  // (user opens manually; buttons provided below can mass-toggle)
+  // Card accordions collapsed by default
   qsa('.card .card-strip .chev').forEach(btn=>{
-    btn.addEventListener('click', e=>{
+    btn.addEventListener('click', ()=>{
       const card = qs(btn.dataset.acc);
       const body = card.querySelector('.card-body');
       const open = !card.classList.contains('open');
@@ -562,7 +641,7 @@ function init() {
   });
   qs('#btnReload').addEventListener('click', ()=> load(true));
 
-  // Delegated clicks: row status + More/Less
+  // Delegated clicks: status + More/Less
   document.addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-action]');
     if(btn){
@@ -602,7 +681,7 @@ async function load(force){
   const {text, tried} = await fetchData(force);
   if(!text){
     err.innerHTML = 'Could not load data file.<br><pre style="white-space:pre-wrap;background:#1a1a1a;border:1px solid #333;padding:8px;border-radius:8px;color:#ddd;">'
-      + tried.join('\n') + '</pre>'
+      + (tried||[]).join('\n') + '</pre>'
       + 'Tip: keep the txt next to this HTML in /docs, or pass <code>?data=</code> with a RAW URL.';
     qs('#shows-root').innerHTML=''; qs('#movies-root').innerHTML='';
     qs('#showsCount').textContent='0'; qs('#moviesCount').textContent='0';
@@ -615,16 +694,6 @@ async function load(force){
     console.error(e);
     err.textContent = 'Parse error: '+e.message;
   }
-}
-
-/* ---------- HELPERS ---------- */
-function esc(s) {
-  return String(s ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 document.addEventListener('DOMContentLoaded', init);
