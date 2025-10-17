@@ -3,18 +3,17 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>The Boys Shows • ChatGPT Light UI</title>
+<title>The Boys Shows • ChatGPT Light UI (TBS-LITE-2.1)</title>
 
 <!--
-  the_boys_ChatGPT.html  (Light/Teal UI)
+  the_boys_ChatGPT.html  (Light/Teal UI, robust loader)
   Purpose: Readable catalog with show→season→episode accordions, responsive tables, high contrast, and persistent status.
-  Data:    ./show_and_movie_data.tile.txt (same folder)
-  Version: 2025-10-16  |  Doc ID: TBS-LITE-2.0
+  Data:    ./show_and_movie_data.tile.txt (same folder) OR ?data=<absolute/relative URL>
+  Version: 2025-10-16  |  Doc ID: TBS-LITE-2.1
 -->
 
 <style>
   :root{
-    /* Light theme inspired by your reference screenshot */
     --page-bg: #f7f9fb;
     --card-bg: #ffffff;
     --row-even: #ffffff;
@@ -22,7 +21,7 @@
     --border:   #d7dde6;
     --text:     #1f2937;
     --muted:    #5b6573;
-    --teal:     #1aa39a;  /* header strip */
+    --teal:     #1aa39a;
     --teal-dark:#16867f;
     --teal-faint:#e3f4f3;
     --link:     #0b6bcf;
@@ -39,174 +38,90 @@
     font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
   }
 
-  .container{
-    max-width:1280px;
-    margin:24px auto 64px;
-    padding:0 16px;
-  }
-
-  header.app{
-    text-align:center;
-    margin-bottom:12px;
-  }
-  .title{
-    font-weight:800;
-    letter-spacing:.2px;
-    font-size: clamp(22px, 2.4vw, 30px);
-    margin:0 0 8px;
-  }
+  .container{ max-width:1280px; margin:24px auto 64px; padding:0 16px; }
+  header.app{ text-align:center; margin-bottom:12px; }
+  .title{ font-weight:800; letter-spacing:.2px; font-size: clamp(22px, 2.4vw, 30px); margin:0 0 8px; }
 
   .toolbar{
-    display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
-    margin-bottom:6px;
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:6px;
   }
   .btn{
     appearance:none; border:1px solid var(--border);
     background:var(--card-bg); color:var(--text);
-    padding:9px 14px; border-radius:10px; cursor:pointer;
-    font-weight:700;
+    padding:9px 14px; border-radius:10px; cursor:pointer; font-weight:700;
   }
   .btn.ticked{ border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal-faint) inset; }
   .btn:focus{ outline:3px solid var(--focus); outline-offset:2px; }
 
-  /* Card sections -------------------------------------------------------- */
   .card{
-    background:var(--card-bg);
-    border:1px solid var(--border);
-    border-radius:14px;
-    overflow:hidden;
-    box-shadow: 0 2px 10px rgba(16,24,40,0.05);
-    margin-top:16px;
+    background:var(--card-bg); border:1px solid var(--border);
+    border-radius:14px; overflow:hidden; box-shadow: 0 2px 10px rgba(16,24,40,0.05); margin-top:16px;
   }
   .card-strip{
-    background:var(--teal);
-    color:#fff;
-    padding:12px 14px;
-    display:flex; align-items:center; gap:10px;
-    font-weight:800;
+    background:var(--teal); color:#fff; padding:12px 14px;
+    display:flex; align-items:center; gap:10px; font-weight:800;
   }
   .chev{
     width:28px; height:28px; display:inline-grid; place-items:center;
-    border-radius:6px; background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.35);
-    cursor:pointer; user-select:none;
-    font-weight:800;
+    border-radius:6px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.35);
+    cursor:pointer; user-select:none; font-weight:800;
   }
-  .badge{
-    margin-left:auto; background:rgba(255,255,255,.16);
-    padding:4px 10px; border-radius:999px; font-weight:700;
-  }
+  .badge{ margin-left:auto; background:rgba(255,255,255,.16); padding:4px 10px; border-radius:999px; font-weight:700; }
   .card-body{ padding:8px 10px 12px; display:none; }
   .card.open .card-body{ display:block; }
 
-  /* Show rows ------------------------------------------------------------- */
-  .show{
-    border:1px solid var(--border);
-    border-radius:12px;
-    overflow:hidden;
-    margin:10px 0;
-    background:var(--card-bg);
-  }
+  .show{ border:1px solid var(--border); border-radius:12px; overflow:hidden; margin:10px 0; background:var(--card-bg); }
   .show-head{
-    display:grid; grid-template-columns: 24px 1fr auto;
-    align-items:center; column-gap:10px;
-    padding:10px 12px;
-    background:#ecf6f5; /* faint teal */
-    border-bottom:1px solid var(--border);
-    cursor:pointer;
+    display:grid; grid-template-columns: 24px 1fr auto; align-items:center; column-gap:10px;
+    padding:10px 12px; background:#ecf6f5; border-bottom:1px solid var(--border); cursor:pointer;
   }
-  .show-head .name{
-    font-weight:800; color:#0a4e4a;
-  }
+  .show-head .name{ font-weight:800; color:#0a4e4a; }
   .chips{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-  .chip{
-    background:#eef2f7; color:var(--muted);
-    border:1px solid var(--border);
-    padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700;
-  }
+  .chip{ background:#eef2f7; color:var(--muted); border:1px solid var(--border); padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; }
   .show-body{ display:none; padding: 8px 10px 12px; }
 
-  /* Season blocks --------------------------------------------------------- */
-  .season{
-    border:1px solid var(--border);
-    border-radius:10px;
-    overflow:hidden;
-    margin:10px 4px;
-    background:var(--card-bg);
-  }
+  .season{ border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:10px 4px; background:var(--card-bg); }
   .season-head{
-    display:flex; align-items:center; gap:12px;
-    padding:10px 12px; background:#e7f1f0; border-bottom:1px solid var(--border);
-    cursor:pointer;
-    font-weight:800; color:#0c605a;
+    display:flex; align-items:center; gap:12px; padding:10px 12px; background:#e7f1f0; border-bottom:1px solid var(--border);
+    cursor:pointer; font-weight:800; color:#0c605a;
   }
   .season-sub{ color:var(--muted); font-weight:600; margin-left:auto; font-size:13px; }
 
-  /* Tables --------------------------------------------------------------- */
-  .table{
-    width:100%;
-    border-collapse:separate; border-spacing:0;
-  }
-  .thead{
-    position:sticky; top:0; z-index:1;
-    background:#e2efee;
-  }
-  /* Episodes grid columns (auto fill; description flexes) */
+  .table{ width:100%; border-collapse:separate; border-spacing:0; }
+  .thead{ position:sticky; top:0; z-index:1; background:#e2efee; }
+
   .row{
     display:grid;
     grid-template-columns: 64px 1.2fr 140px 100px minmax(220px,2fr) 140px 96px 96px 96px 70px 230px;
     align-items:center;
   }
-  .cell, .head{
-    padding:10px 12px; border-bottom:1px solid var(--border);
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  }
+  .cell,.head{ padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .head{ font-weight:800; color:#0a4e4a; }
   .cell.wrap{ white-space:normal; }
   .tbody .row:nth-child(odd){ background:var(--row-odd); }
   .tbody .row:nth-child(even){ background:var(--row-even); }
 
-  /* Movies simpler */
-  .row.movie{
-    grid-template-columns: 1.6fr 140px 100px minmax(260px,2fr) 150px 96px 96px 96px 70px 230px;
-  }
+  .row.movie{ grid-template-columns: 1.6fr 140px 100px minmax(260px,2fr) 150px 96px 96px 96px 70px 230px; }
 
-  /* Description truncation with “More” toggle */
-  .desc{
-    max-height: 1.6em; /* one line */
-    overflow:hidden; text-overflow:ellipsis;
-  }
+  .desc{ max-height: 1.6em; overflow:hidden; text-overflow:ellipsis; }
   .desc.open{ max-height:none; white-space:normal; }
-  .more{
-    margin-left:8px; font-weight:800; color:var(--link); cursor:pointer;
-  }
+  .more{ margin-left:8px; font-weight:800; color:var(--link); cursor:pointer; }
 
-  /* Status buttons (high-contrast) */
   .btn-mini{
-    border:1px solid var(--border);
-    background:#eef2f7;
-    color:#0f172a;
-    border-radius:8px; padding:6px 8px; cursor:pointer; font-weight:800; font-size:13px;
-    margin-right:6px;
+    border:1px solid var(--border); background:#eef2f7; color:#0f172a;
+    border-radius:8px; padding:6px 8px; cursor:pointer; font-weight:800; font-size:13px; margin-right:6px;
   }
-  .btn-mini.ok{    background:#e6f4ea; color:var(--ok); border-color:#b9e0c0; }
-  .btn-mini.info{  background:#e6f0fb; color:var(--info); border-color:#c7d5f5; }
-  .btn-mini.dang{  background:#fdeaea; color:var(--danger); border-color:#f3b8b8; }
+  .btn-mini.ok{   background:#e6f4ea; color:var(--ok);   border-color:#b9e0c0; }
+  .btn-mini.info{ background:#e6f0fb; color:var(--info); border-color:#c7d5f5; }
+  .btn-mini.dang{ background:#fdeaea; color:var(--danger); border-color:#f3b8b8; }
   .btn-mini:focus{ outline:3px solid var(--focus); outline-offset:2px; }
 
-  a.link{
-    color:var(--link);
-    text-decoration:none; border-bottom:1px dotted #9ec5ff;
-  }
+  a.link{ color:var(--link); text-decoration:none; border-bottom:1px dotted #9ec5ff; }
   a.link:focus{ outline:3px solid var(--focus); outline-offset:2px; }
-  .status-dot{
-    width:10px; height:10px; border-radius:999px; background:#94a3b8; display:inline-block;
-    border:1px solid var(--border);
-  }
+  .status-dot{ width:10px; height:10px; border-radius:999px; background:#94a3b8; display:inline-block; border:1px solid var(--border); }
   .is-watching .status-dot{ background:#64b5f6; }
   .is-watched  .status-dot{ background:#81c784; }
 
-  /* Responsiveness */
   @media (max-width: 1100px){
     .row{ grid-template-columns: 56px 1.2fr 128px 90px minmax(180px,2fr) 130px 90px 90px 90px 64px 200px; }
     .row.movie{ grid-template-columns: 1.3fr 125px 90px minmax(210px,2fr) 140px 90px 90px 90px 64px 200px; }
@@ -218,7 +133,7 @@
   }
   @media (max-width: 700px){
     .row{ grid-template-columns: 44px 1fr 110px 76px minmax(150px,2fr) 0px 80px 80px 80px 56px 160px; }
-    .row .cell:nth-child(6){ display:none; } /* hide 'Source' on small screens to reduce width */
+    .row .cell:nth-child(6){ display:none; } /* hide 'Source' on small screens */
     .row.movie{ grid-template-columns: 1fr 108px 76px minmax(180px,2fr) 0px 80px 80px 80px 56px 160px; }
     .row.movie .cell:nth-child(5){ display:none; }
   }
@@ -242,7 +157,7 @@
       <div class="card-strip">
         <button class="chev" data-acc="#cardShows">▸</button>
         Shows
-        <span class="badge" id="showsCount">0</span>
+        <span class="badge" id="showsCount">…</span>
       </div>
       <div class="card-body" id="showsBody"></div>
     </section>
@@ -252,7 +167,7 @@
       <div class="card-strip">
         <button class="chev" data-acc="#cardMovies">▸</button>
         Movies
-        <span class="badge" id="moviesCount">0</span>
+        <span class="badge" id="moviesCount">…</span>
       </div>
       <div class="card-body" id="moviesBody"></div>
     </section>
@@ -262,10 +177,10 @@
 
 <script>
 /* =================== Config =================== */
-const DATA_FILE = 'show_and_movie_data.tile.txt';
+const DEFAULT_FILE = 'show_and_movie_data.tile.txt';
+const ALT_FILE     = 'show_and_movie_data.txt';
 const NS = 'ajp.lite';  // localStorage namespace
 
-/* link builders */
 const L = {
   tmdbTv  : (id) => `https://www.themoviedb.org/tv/${encodeURIComponent(id)}`,
   tmdbMov : (id) => `https://www.themoviedb.org/movie/${encodeURIComponent(id)}`,
@@ -289,7 +204,7 @@ function setStatus(type,id,s,e,val){ localStorage.setItem(key(type,id,s,e), val)
 function getStatus(type,id,s,e){ return localStorage.getItem(key(type,id,s,e)) || 'none'; }
 
 function splitPipes(line){
-  // support "quoted|segments"
+  // supports "quoted|segments"
   const out=[]; let cur='',q=false;
   for(let i=0;i<line.length;i++){
     const ch=line[i];
@@ -300,16 +215,59 @@ function splitPipes(line){
   return out.map(s=>s.replace(/\\n/g,'\n').trim());
 }
 
+/* =================== Robust Loader ==================== */
+/* Tries multiple candidate URLs so GH Pages / local / docs/ all work */
+async function fetchFirst(urls, force=false){
+  const tried = [];
+  for(const u of [...new Set(urls)]){
+    try{
+      const r = await fetch(u, {cache: force?'reload':'no-store'});
+      tried.push({url:u, status:r.status});
+      if(r.ok){
+        const text = await r.text();
+        if(text && text.trim().length>0) return {text, used:u, tried};
+      }
+    }catch(e){
+      tried.push({url:u, status:'ERR'});
+    }
+  }
+  return {text:null, used:null, tried};
+}
+
+function candidateURLs(){
+  const q = new URLSearchParams(location.search).get('data');
+  if(q) return [q];
+
+  const here = location.href;
+  const baseDir = here.substring(0, here.lastIndexOf('/')+1);
+  const parts = location.pathname.split('/').filter(Boolean); // /user.github.io/<repo>/file
+  const repoBase = parts.length>=1 ? `/${parts[0]}/` : '/';
+
+  return [
+    DEFAULT_FILE,                       // same folder
+    ALT_FILE,                           // alt filename
+    baseDir + DEFAULT_FILE,             // absolute to current doc
+    baseDir + ALT_FILE,
+    repoBase + DEFAULT_FILE,            // site root + file
+    repoBase + ALT_FILE,
+    './docs/' + DEFAULT_FILE,           // try docs/
+    './docs/' + ALT_FILE,
+    repoBase + 'docs/' + DEFAULT_FILE,
+    repoBase + 'docs/' + ALT_FILE
+  ];
+}
+
 /* =================== Parse ==================== */
 function parse(text){
   const shows=new Map(); const movies=[];
-  let section=null, currentShow=null, lastSeason=null;
+  let currentShow=null, lastSeason=null;
 
   for(const raw of text.split(/\r?\n/)){
     const line=raw.trim();
     if(!line || line.startsWith('#')) continue;
-    if(line==='SHOWS'){ section='SHOWS'; continue; }
-    if(line==='MOVIES'){ section='MOVIES'; continue; }
+
+    // Section markers (optional, ignored otherwise)
+    if(line.toUpperCase()==='SHOWS' || line.toUpperCase()==='MOVIES') continue;
 
     const f=splitPipes(line);
     const type=(f[0]||'').toLowerCase();
@@ -363,12 +321,14 @@ function renderAll(model){
   renderMovies(model);
   restoreStates();
   applyFilters();
+  // open both sections after first successful render
+  toggleCard('#cardShows', true);
+  toggleCard('#cardMovies', true);
 }
 
-/* ---- Shows ---- */
 function renderShows({shows}){
   const body = $('#showsBody'); body.innerHTML='';
-  $('#showsCount').textContent = shows.size;
+  $('#showsCount').textContent = String(shows.size);
 
   for(const show of shows.values()){
     const wrap = document.createElement('div');
@@ -391,7 +351,6 @@ function renderShows({shows}){
     `;
     body.appendChild(wrap);
 
-    // seasons
     const host = $('#'+showBodyId);
     const seasons = [...show.seasons.values()].sort((a,b)=>Number(a.num)-Number(b.num));
     for(const s of seasons){
@@ -435,9 +394,7 @@ function renderEpisodeTable(showId, s){
         <div class="cell"><a class="link" href="${ep.links.map}"  target="_blank" rel="noopener">🌐 Mapple</a></div>
         <div class="cell"><a class="link" href="${ep.links.nun}"  target="_blank" rel="noopener">🎬 NunFlix</a></div>
         <div class="cell">${tbd}</div>
-        <div class="cell">
-          ${btnSet(rowId, saved)}
-        </div>
+        <div class="cell">${btnSet(rowId, saved)}</div>
       </div>
     `;
   }).join('');
@@ -457,9 +414,7 @@ function renderEpisodeTable(showId, s){
         <div class="head" role="columnheader">TBD</div>
         <div class="head" role="columnheader">Status</div>
       </div>
-      <div class="tbody">
-        ${rows}
-      </div>
+      <div class="tbody">${rows}</div>
     </div>
   `;
 }
@@ -483,10 +438,9 @@ function btnSet(id, state){
   }
 }
 
-/* ---- Movies ---- */
 function renderMovies({movies}){
   const body=$('#moviesBody'); body.innerHTML='';
-  $('#moviesCount').textContent = movies.length;
+  $('#moviesCount').textContent = String(movies.length);
 
   const rows = movies.map(m=>{
     const saved = getStatus('movie', m.id) || m.watchStatus || 'none';
@@ -499,10 +453,7 @@ function renderMovies({movies}){
         <div class="cell"><a class="link" href="${L.tmdbMov(m.id)}" target="_blank" rel="noopener">${esc(m.name)}</a></div>
         <div class="cell">${esc(m.releaseDate||'')}</div>
         <div class="cell">${esc(m.runtime||'')}</div>
-        <div class="cell">
-          <span class="desc">${esc(m.overview||'')}</span>
-          <span class="more" data-more="${id}">More</span>
-        </div>
+        <div class="cell"><span class="desc">${esc(m.overview||'')}</span><span class="more" data-more="${id}">More</span></div>
         <div class="cell">${esc(m.source||'')}</div>
         <div class="cell"><a class="link" href="${m.links.vids}" target="_blank" rel="noopener">📺</a></div>
         <div class="cell"><a class="link" href="${m.links.map}"  target="_blank" rel="noopener">🌐</a></div>
@@ -518,16 +469,9 @@ function renderMovies({movies}){
   table.setAttribute('role','table');
   table.innerHTML = `
     <div class="thead row">
-      <div class="head">Title</div>
-      <div class="head">Release</div>
-      <div class="head">Length</div>
-      <div class="head">Overview</div>
-      <div class="head">Source</div>
-      <div class="head">VidSrc</div>
-      <div class="head">Mapple</div>
-      <div class="head">NunFlix</div>
-      <div class="head">TBD</div>
-      <div class="head">Status</div>
+      <div class="head">Title</div><div class="head">Release</div><div class="head">Length</div>
+      <div class="head">Overview</div><div class="head">Source</div><div class="head">VidSrc</div>
+      <div class="head">Mapple</div><div class="head">NunFlix</div><div class="head">TBD</div><div class="head">Status</div>
     </div>
     <div class="tbody">${rows}</div>
   `;
@@ -546,48 +490,51 @@ function applyFilters(){
     if(watchingOnly && st!=='watching') show=false;
     r.style.display = show ? 'grid' : 'none';
   });
+
   // hide season shells if all children hidden
   $$('.season').forEach(season=>{
-    const tbl = season.querySelector('.tbody');
-    if(!tbl) return;
-    const any = $$('.row', tbl).some(r => r.style.display !== 'none');
+    const tbody = season.querySelector('.tbody');
+    if(!tbody) return;
+    const any = $$('.row', tbody).some(r => r.style.display !== 'none');
     season.style.display = any ? 'block' : 'none';
   });
 }
 
 function restoreStates(){
-  // Reapply saved status to rows after first render
   $$('.row[data-type="ep"], .row.movie').forEach(row=>{
     const type=row.dataset.type;
     let saved='none';
     if(type==='ep') saved=getStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep);
     else            saved=getStatus('movie', row.dataset.id);
-    if(saved && saved!=='none') setRowState(row, saved);
+    if(saved && saved!=='none') setRowState(row, saved, false);
   });
 }
 
-function setRowState(row, state){
+function setRowState(row, state, persist=true){
   row.dataset.status = state;
   row.classList.toggle('is-watched',  state==='watched');
   row.classList.toggle('is-watching', state==='watching');
   const id=row.id;
   const lastCell = row.lastElementChild;
   if(lastCell) lastCell.innerHTML = btnSet(id, state);
-  if(row.dataset.type==='ep'){
-    setStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep, state);
-  }else{
-    setStatus('movie', row.dataset.id, null, null, state);
+  if(persist){
+    if(row.dataset.type==='ep'){
+      setStatus('ep', row.dataset.show, row.dataset.season, row.dataset.ep, state);
+    }else{
+      setStatus('movie', row.dataset.id, null, null, state);
+    }
   }
+  applyFilters();
 }
 
-function toggleCard(sel){
+function toggleCard(sel, open){
   const card=$(sel); if(!card) return;
   const body=card.querySelector('.card-body');
-  const open = !card.classList.contains('open');
-  card.classList.toggle('open', open);
-  body.style.display = open ? 'block' : 'none';
   const btn = card.querySelector('.card-strip .chev');
-  if(btn) btn.textContent = open ? '▾' : '▸';
+  const willOpen = open!=null ? open : !card.classList.contains('open');
+  card.classList.toggle('open', willOpen);
+  if(btn) btn.textContent = willOpen ? '▾' : '▸';
+  if(body) body.style.display = willOpen ? 'block' : 'none';
 }
 
 /* =================== Boot =================== */
@@ -596,8 +543,6 @@ function init(){
   $$('.card .card-strip .chev').forEach(b=>{
     b.addEventListener('click', e => toggleCard(e.currentTarget.dataset.acc));
   });
-  // Open both by default
-  toggleCard('#cardShows'); toggleCard('#cardMovies');
 
   // Toolbar toggles
   $('#btnHideComplete').addEventListener('click', e=>{
@@ -613,18 +558,13 @@ function init(){
     applyFilters();
   });
   $('#btnExpandAll').addEventListener('click', ()=>{
-    $$('.season-head').forEach(h=>{
-      const id = h.dataset.toggle;
-      const body = $(id);
-      if(body && body.style.display==='none'){ body.style.display='block'; h.querySelector('.chev').textContent='▾'; h.setAttribute('aria-expanded','true'); }
-    });
+    // open every show & every season
+    $$('.show-head').forEach(h=>{ if($(h.dataset.toggle)?.style.display!=='block'){ h.click(); } });
+    $$('.season-head').forEach(h=>{ if($(h.dataset.toggle)?.style.display!=='block'){ h.click(); } });
   });
   $('#btnCollapseAll').addEventListener('click', ()=>{
-    $$('.season-head').forEach(h=>{
-      const id = h.dataset.toggle;
-      const body = $(id);
-      if(body && body.style.display!=='none'){ body.style.display='none'; h.querySelector('.chev').textContent='▸'; h.setAttribute('aria-expanded','false'); }
-    });
+    $$('.season-head').forEach(h=>{ if($(h.dataset.toggle)?.style.display!=='none'){ h.click(); } });
+    $$('.show-head').forEach(h=>{ if($(h.dataset.toggle)?.style.display!=='none'){ h.click(); } });
   });
   $('#btnReload').addEventListener('click', ()=> loadData(true));
 
@@ -677,7 +617,7 @@ function init(){
       if(!row) return;
       const action = btn.dataset.action; // watching | watched | none
       const newState = action==='none' ? 'none' : action;
-      setRowState(row, newState);
+      setRowState(row, newState, true);
       return;
     }
   });
@@ -694,12 +634,36 @@ function init(){
   loadData(false);
 }
 
-function loadData(force){
+async function loadData(force){
   $('#err').textContent='';
-  fetch(DATA_FILE, {cache: force?'reload':'no-store'})
-    .then(r=>{ if(!r.ok) throw new Error('Failed to load data: '+r.status); return r.text(); })
-    .then(txt => { const model=parse(txt); renderAll(model); })
-    .catch(err => { console.error(err); $('#err').textContent = 'Error: '+err.message+' — ensure the data file sits beside this HTML.'; });
+  $('#showsCount').textContent='…';
+  $('#moviesCount').textContent='…';
+
+  const urls = candidateURLs();
+  const {text, used, tried} = await fetchFirst(urls, force);
+
+  if(!text){
+    const list = tried.map(t => `• ${t.url}  [${t.status}]`).join('\n');
+    $('#err').innerHTML =
+      'Could not load data file. Tried:<br><pre style="white-space:pre-wrap;background:#fff;border:1px solid #eee;padding:8px;border-radius:8px;">'+
+      esc(list) + '</pre>' +
+      'Tip: ensure the data file sits next to this HTML or pass <code>?data=/IPTV_Data_Harmonization_System/show_and_movie_data.tile.txt</code> in the URL.';
+    $('#showsCount').textContent='0';
+    $('#moviesCount').textContent='0';
+    $('#showsBody').innerHTML='';
+    $('#moviesBody').innerHTML='';
+    return;
+  }
+
+  try{
+    const model = parse(text);
+    renderAll(model);
+  }catch(e){
+    console.error(e);
+    $('#err').textContent = 'Parse error: '+e.message;
+    $('#showsCount').textContent='0';
+    $('#moviesCount').textContent='0';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
