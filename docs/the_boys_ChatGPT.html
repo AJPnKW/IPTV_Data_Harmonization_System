@@ -3,12 +3,11 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>The Boys Shows • Dark UI (TBS-DARK-3.2)</title>
+<title>The Boys Shows • Dark UI (TBS-DARK-3.3)</title>
 <!--
   the_boys_ChatGPT.html
   Dark, high-contrast UI with show→season→episode accordions.
-  Includes CONFIG/parser/globals (DATA_URL, NS, keyFor/get/set, parseDataFile, toggleSection/Complete/Watched)
-  Version: 3.2  |  2025-10-16
+  Version: 3.3  |  2025-10-17
 -->
 
 <style>
@@ -230,7 +229,9 @@ function setStatus(type, tmdbId, seasonNum, epNum, status) {
 async function fetchData(force=false){
   const override = new URLSearchParams(location.search).get('data');
   const baseDir  = location.href.substring(0, location.href.lastIndexOf('/')+1);
-  const RAW_URL  = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/' + DATA_URL;
+  // This RAW path also works: refs/heads/main (you used this), but keep a plain main/ fallback.
+  const RAW1 = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/refs/heads/main/docs/' + DATA_URL;
+  const RAW2 = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/' + DATA_URL;
 
   const candidates = [
     override,
@@ -238,7 +239,7 @@ async function fetchData(force=false){
     baseDir + DATA_URL,
     `/IPTV_Data_Harmonization_System/${DATA_URL}`,
     `/IPTV_Data_Harmonization_System/docs/${DATA_URL}`,
-    RAW_URL
+    RAW1, RAW2
   ].filter(Boolean);
 
   const tried=[];
@@ -256,10 +257,10 @@ async function fetchData(force=false){
 }
 
 /* ---------- PARSER ---------- */
-/* Handles:
+/* Supports:
    - show|tmdb_id|name|overview|#_of_seasons|date|status|source|schedule|tmdb_url_link
    - season|tmdb_id|seasonNum|year|overview|watchStatus
-   - episode|tmdb|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus       (legacy)
+   - episode|tmdb|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus           (legacy)
    - episode|tmdb|seasonNum|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus  (explicit)
    - movie|tmdb_id|...
    Ignores section labels: SHOWS / SEASONS / EPISODES / MOVIES
@@ -268,6 +269,9 @@ function parseDataFile(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const shows = new Map();
   const movies = [];
+
+  // Track the "current" season per show so legacy episodes attach correctly
+  const currentSeasonByShow = new Map();
 
   for (const raw of lines) {
     if (raw.startsWith('#')) continue;
@@ -278,8 +282,8 @@ function parseDataFile(text) {
     const kind = (f[0] || '').toLowerCase();
 
     if (kind === 'show') {
-      // show|tmdb_id|name|overview|#_of_seasons|date|status|source|schedule|tmdb_url_link
-      const [, id, name, overview, nSeasons, date, status, source, schedule, tmdbUrl] = f;
+      const [, idRaw, name, overview, nSeasons, date, status, source, schedule, tmdbUrl] = f;
+      const id = (idRaw||'').trim();
       if (!id) continue;
       if (!shows.has(id)) {
         shows.set(id, {
@@ -292,44 +296,40 @@ function parseDataFile(text) {
       }
 
     } else if (kind === 'season') {
-      // season|tmdb_id|seasonNum|year|overview|watchStatus
-      const [, showId, seasonNum, year, overview, watchStatus] = f;
+      const [, showIdRaw, seasonNumRaw, year, overview, watchStatus] = f;
+      const showId = (showIdRaw||'').trim();
+      const seasonNum = String((seasonNumRaw||'').trim());
       const show = ensureShow(shows, showId);
       if (!show) continue;
-      const key = String(seasonNum);
-      if (!show.seasons.has(key)) {
-        show.seasons.set(key, { showId, seasonNum: key, year, overview, watchStatus, episodes: [] });
-      } else {
-        const s = show.seasons.get(key);
-        s.year ||= year; s.overview ||= overview; s.watchStatus ||= watchStatus;
-      }
+
+      const s = ensureSeason(show, seasonNum);
+      s.year ||= year; s.overview ||= overview; s.watchStatus ||= watchStatus;
+
+      // set CURRENT season for legacy episodes that follow
+      currentSeasonByShow.set(showId, seasonNum);
 
     } else if (kind === 'episode') {
-      /* Support both layouts; create season if missing, even if episodes come first */
-      const tmdb = f[1];
+      const tmdbRaw = f[1];
+      const tmdb = (tmdbRaw||'').trim();
       const show = ensureShow(shows, tmdb);
       if (!show) continue;
 
-      let idx = 2;
-      let seasonNum, epNum;
-
       // Detect explicit "seasonNum|epNum"
-      const maybeSeason = parseInt(f[2], 10);
-      const maybeEp     = parseInt(f[3], 10);
+      const maybeSeason = parseInt((f[2]||'').trim(), 10);
+      const maybeEp     = parseInt((f[3]||'').trim(), 10);
       const looksExplicit = Number.isInteger(maybeSeason) && Number.isInteger(maybeEp);
 
+      let idx, seasonNum, epNum;
       if (looksExplicit) {
         seasonNum = String(maybeSeason);
         epNum     = String(maybeEp);
         idx = 4;
       } else {
-        // legacy: epNum only → attach to latest or synthesize S1
-        epNum = String(f[2]);
-        const latest = pickLatestSeason(show);
-        seasonNum = latest ? latest.seasonNum : '1';
-        if (!show.seasons.has(seasonNum)) {
-          show.seasons.set(seasonNum, { showId: tmdb, seasonNum, year:'', overview:'', watchStatus:'', episodes:[] });
-        }
+        // legacy: epNum only → attach to current season if set; else to latest; else synthesize S1
+        epNum = String((f[2]||'').trim());
+        seasonNum = currentSeasonByShow.get(tmdb)
+                  || (pickLatestSeason(show)?.seasonNum)
+                  || '1';
         idx = 3;
       }
 
@@ -348,23 +348,23 @@ function parseDataFile(text) {
       season.episodes.push({ showId: tmdb, epNum, name, date, desc, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
 
     } else if (kind === 'movie') {
-      // movie|tmdb_id|name|overview|releaseDate|rating|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
       const [, id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus] = f;
-      movies.push({ id, name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
+      movies.push({ id: (id||'').trim(), name, overview, releaseDate, rating, runtime, source, vidSrc, mapple, nunFlix, tbd, watchStatus });
     }
   }
   return { shows, movies };
 }
 
 function ensureShow(shows, id){
-  if (!id) return null;
-  if (!shows.has(id)) {
-    shows.set(id, { id, name:'', overview:'', nSeasons:null, date:'', status:'', source:'', schedule:'', tmdbUrl:'', seasons:new Map() });
+  const key = (id||'').trim();
+  if (!key) return null;
+  if (!shows.has(key)) {
+    shows.set(key, { id:key, name:'', overview:'', nSeasons:null, date:'', status:'', source:'', schedule:'', tmdbUrl:'', seasons:new Map() });
   }
-  return shows.get(id);
+  return shows.get(key);
 }
 function ensureSeason(show, seasonNum){
-  const key = String(seasonNum);
+  const key = String((seasonNum||'').trim() || '1');
   if (!show.seasons.has(key)) {
     show.seasons.set(key, { showId: show.id, seasonNum: key, year:'', overview:'', watchStatus:'', episodes:[] });
   }
