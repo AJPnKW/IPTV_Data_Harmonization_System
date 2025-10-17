@@ -39,19 +39,17 @@
     }
     th {
       background-color: #333;
-      color: #f0c000; /* accent color for headers */
+      color: #f0c000;
+      cursor: pointer;
     }
-  
-    /* --- TVmaze-style enhancements --- */
-    table tr:nth-child(even) {
-      background-color: #1a1a1a; /* slightly lighter than body background */
-    }
-    table tr:nth-child(odd) {
-      background-color: #111;    /* matches page background */
-    }
-    table tr:hover {
-      background-color: #333;    /* highlight row on hover */
-    }
+    /* Zebra striping + hover */
+    table tr:nth-child(even) { background-color: #1a1a1a; }
+    table tr:nth-child(odd) { background-color: #111; }
+    table tr:hover { background-color: #333; }
+    /* Watch status badges */
+    .status-watched { color: #0f0; font-weight: bold; }
+    .status-watching { color: #0ff; font-weight: bold; }
+    .status-none { color: #f66; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -70,6 +68,14 @@
 
 <script>
 const dataUrl = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/show_and_movie_data.tile.txt';
+
+function badge(status) {
+  if (!status) return '';
+  const s = status.toLowerCase();
+  if (s.includes('watched')) return `<span class="status-watched">✅ ${status}</span>`;
+  if (s.includes('watching')) return `<span class="status-watching">⏳ ${status}</span>`;
+  return `<span class="status-none">❌ ${status}</span>`;
+}
 
 async function loadData() {
   const res = await fetch(dataUrl);
@@ -118,7 +124,7 @@ function renderShows(shows) {
     const showDetails = document.createElement('details');
     showDetails.open = true;
     const showSummary = document.createElement('summary');
-    showSummary.textContent = `${show.name}`;
+    showSummary.textContent = show.name;
     showDetails.appendChild(showSummary);
 
     const table = document.createElement('table');
@@ -129,8 +135,11 @@ function renderShows(shows) {
     table.appendChild(header);
 
     const row = document.createElement('tr');
-    [show.id, show.name, show.overview, show.date, show.status, show.source, show.schedule, show.url].forEach(val => {
-      const td = document.createElement('td'); td.textContent = val; row.appendChild(td);
+    [show.id, show.name, show.overview, show.date, show.status, show.source, show.schedule, show.url].forEach((val,i) => {
+      const td = document.createElement('td');
+      if (i===7 && val) { td.innerHTML = `<a href="${val}" target="_blank">${val}</a>`; }
+      else td.textContent = val;
+      row.appendChild(td);
     });
     table.appendChild(row);
     showDetails.appendChild(table);
@@ -149,8 +158,8 @@ function renderShows(shows) {
       });
       seasonTable.appendChild(sHeader);
       const sRow = document.createElement('tr');
-      [season.seasonNum, season.year, season.overview, season.watchStatus].forEach(val => {
-        const td = document.createElement('td'); td.textContent = val; sRow.appendChild(td);
+      [season.seasonNum, season.year, season.overview, badge(season.watchStatus)].forEach(val => {
+        const td = document.createElement('td'); td.innerHTML = val; sRow.appendChild(td);
       });
       seasonTable.appendChild(sRow);
       seasonDetails.appendChild(seasonTable);
@@ -165,8 +174,8 @@ function renderShows(shows) {
 
         season.episodes.forEach(ep => {
           const row = document.createElement('tr');
-          [ep.epNum, ep.title, ep.date, ep.desc, ep.runtime, ep.source, ep.vidSrc, ep.mapple, ep.nunFlix, ep.tbd, ep.watchStatus].forEach(val => {
-            const td = document.createElement('td'); td.textContent = val; row.appendChild(td);
+          [ep.epNum, ep.title, ep.date, ep.desc, ep.runtime, ep.source, ep.vidSrc, ep.mapple, ep.nunFlix, ep.tbd, badge(ep.watchStatus)].forEach(val => {
+            const td = document.createElement('td'); td.innerHTML = val; row.appendChild(td);
           });
           epTable.appendChild(row);
         });
