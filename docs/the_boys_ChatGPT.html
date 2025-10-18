@@ -3,20 +3,23 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>The Boys Shows • Dark UI (TBS-DARK-4.2)</title>
+<title>The Boys Shows • Dark UI (TBS-DARK-4.3)</title>
 <!--
   the_boys_ChatGPT.html
-  Dark, high-contrast UI with show→season→episode accordions.
-  Adds: Reload Status Window (progress, errors, URL tries, counts), diagnostics tools.
-  No watchStatus in data file; status is stored in localStorage only.
+  Dark UI with show→season→episode accordions + QA/diagnostics.
+  4.3: Fix for “seasons/episodes not visible after expand”
+       - On-demand hydration on show expand
+       - Normalize IDs to prevent key mismatches
+       - Auto-open first season
+       - Show-level chips: Seasons / Episodes counts
 
-  Data Schema (v1, no watchStatus):
+  Data Schema (no watchStatus in file):
     show|tmdb_id|name|overview|numSeasons|firstAirDate|status|source|schedule
     season|tmdb_id|seasonNum|year|overview
     episode|tmdb_id|seasonNum|epNum|name|airDate|desc|runtime|source
     movie|tmdb_id|name|overview|releaseDate|rating|runtime|source
 
-  Version: 4.2  |  2025-10-18
+  Version: 4.3  |  2025-10-18
 -->
 
 <style>
@@ -149,28 +152,20 @@
   body.hide-complete .status-watched{ display:none !important; }
   body.watching-only .row:not(.status-watching){ display:none !important; }
 
-  /* Loading modal */
-  .modal-backdrop{
-    position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; z-index:1000;
-  }
-  .modal{
-    position:fixed; inset:auto 0 0 0; margin:auto; top:10vh; width:min(900px,92vw);
-    background:var(--panel2); border:1px solid var(--border); border-radius:14px; box-shadow:0 12px 28px var(--shadow);
-    display:none; z-index:1001;
-  }
+  /* Loading modal (unchanged from 4.2) */
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; z-index:1000; }
+  .modal{ position:fixed; inset:auto 0 0 0; margin:auto; top:10vh; width:min(900px,92vw);
+          background:var(--panel2); border:1px solid var(--border); border-radius:14px; box-shadow:0 12px 28px var(--shadow);
+          display:none; z-index:1001; }
   .modal.open, .modal-backdrop.open{ display:block; }
-  .modal-head{
-    display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding:12px 14px; border-bottom:1px solid var(--border); font-weight:900;
-    background:linear-gradient(180deg, #1a2230, #171f2b);
-  }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+               padding:12px 14px; border-bottom:1px solid var(--border); font-weight:900;
+               background:linear-gradient(180deg, #1a2230, #171f2b); }
   .modal-body{ padding:10px 14px; }
   .modal-foot{ padding:10px 14px; border-top:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap; }
   .pill{ background:#1e2634; border:1px solid var(--border); padding:2px 8px; border-radius:999px; font-weight:800; font-size:12px; color:#cfe2ff; }
-  .log{
-    background:#0f131c; border:1px solid #24314a; color:#d6e4ff; border-radius:10px; padding:10px; height:240px; overflow:auto;
-    font:13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; white-space:pre-wrap;
-  }
+  .log{ background:#0f131c; border:1px solid #24314a; color:#d6e4ff; border-radius:10px; padding:10px; height:240px; overflow:auto;
+        font:13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; white-space:pre-wrap; }
   .statgrid{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; margin:8px 0; }
   .stat{ background:#172033; border:1px solid #2a3a58; border-radius:10px; padding:8px; text-align:center; }
   .stat b{ display:block; font-size:20px; }
@@ -182,7 +177,7 @@
     <header class="app">
       <div class="topline">
         <h1 class="title">The Boys Shows</h1>
-        <span class="version">TBS-DARK-4.2</span>
+        <span class="version">TBS-DARK-4.3</span>
       </div>
       <div class="toolbar" role="toolbar">
         <button class="btn" id="btnHideComplete">Hide Complete</button>
@@ -234,13 +229,13 @@
     <p id="error" style="color:#ff9e9e; margin-top:12px;"></p>
   </div>
 
-  <!-- Reload / Status Modal -->
+  <!-- Reload / Status Modal (same as 4.2) -->
   <div class="modal-backdrop" id="modalBackdrop"></div>
   <div class="modal" id="statusModal" role="dialog" aria-modal="true" aria-labelledby="statusTitle">
     <div class="modal-head">
       <div id="statusTitle">Reload status</div>
       <div>
-        <span class="pill" id="pillBuild">Build: 4.2</span>
+        <span class="pill" id="pillBuild">Build: 4.3</span>
         <span class="pill" id="pillTimer">0 ms</span>
       </div>
     </div>
@@ -271,9 +266,9 @@
 
 <script>
 /* ---------- CONFIG ---------- */
-const APP_VERSION = 'TBS-DARK-4.2';
-const DATA_URL = 'show_and_movie_data.tile.txt';
-const NS       = 'ajp.watchstatus';
+const APP_VERSION = 'TBS-DARK-4.3';
+const DATA_URL   = 'show_and_movie_data.tile.txt';
+const NS         = 'ajp.watchstatus';
 
 const links = {
   tmdbShow:   (id)        => `https://www.themoviedb.org/tv/${id}`,
@@ -300,40 +295,20 @@ let gLastUsed  = '';
 let gLastTried = [];
 let gLastDiag  = {};
 
-/* ---------- STATUS MODAL ---------- */
+/* ---------- STATUS MODAL (same as 4.2) ---------- */
 const modal = {
   backdrop: null, root: null, logEl: null, errEl: null, urlEl: null,
   st: { shows: null, movies: null, seasons: null, episodes: null },
   pillTimer: null,
-  open(){
-    this.backdrop.classList.add('open');
-    this.root.classList.add('open');
-    this.clear();
-  },
-  close(){
-    this.root.classList.remove('open');
-    this.backdrop.classList.remove('open');
-  },
-  clear(){
-    this.logEl.textContent='';
-    this.errEl.textContent='';
-    this.st.shows.textContent='0';
-    this.st.movies.textContent='0';
-    this.st.seasons.textContent='0';
-    this.st.episodes.textContent='0';
-    this.urlEl.textContent='(unknown)';
-    this.urlEl.href='#';
-    this.pillTimer.textContent='0 ms';
-  },
+  open(){ this.backdrop.classList.add('open'); this.root.classList.add('open'); this.clear(); },
+  close(){ this.root.classList.remove('open'); this.backdrop.classList.remove('open'); },
+  clear(){ this.logEl.textContent=''; this.errEl.textContent=''; this.st.shows.textContent='0';
+          this.st.movies.textContent='0'; this.st.seasons.textContent='0'; this.st.episodes.textContent='0';
+          this.urlEl.textContent='(unknown)'; this.urlEl.href='#'; this.pillTimer.textContent='0 ms'; },
   log(line){ this.logEl.textContent += (this.logEl.textContent ? '\n' : '') + line; this.logEl.scrollTop = this.logEl.scrollHeight; },
   setError(msg){ this.errEl.textContent = msg || ''; },
   setUrl(u){ this.urlEl.textContent = u || '(unknown)'; if(u){ this.urlEl.href = u; } },
-  setCounts({shows, movies, seasons, episodes}){
-    this.st.shows.textContent = shows;
-    this.st.movies.textContent = movies;
-    this.st.seasons.textContent = seasons;
-    this.st.episodes.textContent = episodes;
-  },
+  setCounts({shows, movies, seasons, episodes}){ this.st.shows.textContent=shows; this.st.movies.textContent=movies; this.st.seasons.textContent=seasons; this.st.episodes.textContent=episodes; },
   setTimer(ms){ this.pillTimer.textContent = `${ms} ms`; }
 };
 
@@ -355,14 +330,11 @@ function setStatus(type, tmdbId, seasonNum, epNum, status) {
 async function fetchData(force=false, progress=()=>{}){
   const override = new URLSearchParams(location.search).get('data');
   const baseDir  = location.href.substring(0, location.href.lastIndexOf('/')+1);
-
   const RAW_HEADS = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/refs/heads/main/docs/' + DATA_URL;
   const RAW_MAIN  = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/' + DATA_URL;
 
   const candidates = [
-    override,
-    RAW_HEADS,
-    RAW_MAIN,
+    override, RAW_HEADS, RAW_MAIN,
     baseDir + DATA_URL,
     `/IPTV_Data_Harmonization_System/${DATA_URL}`,
     `/IPTV_Data_Harmonization_System/docs/${DATA_URL}`,
@@ -375,10 +347,8 @@ async function fetchData(force=false, progress=()=>{}){
       progress(`Trying: ${url}`);
       const t0 = performance.now();
       const r = await fetch(url, { cache: force ? 'reload' : 'no-store' });
-      const t1 = performance.now();
-      const ms = Math.round(t1 - t0);
-      tried.push(`${url} [${r.status}] (${ms} ms)`);
-      progress(`→ ${r.status} in ${ms} ms`);
+      const ms = Math.round(performance.now()-t0);
+      tried.push(`${url} [${r.status}] (${ms} ms)`); progress(`→ ${r.status} in ${ms} ms`);
       if (r.ok) {
         const txt = await r.text();
         const size = new Blob([txt]).size;
@@ -391,7 +361,14 @@ async function fetchData(force=false, progress=()=>{}){
   return { text: null, used: null, tried };
 }
 
-/* ---------- PARSER (v1 schema; no watchStatus) ---------- */
+/* ---------- PARSER (normalize keys) ---------- */
+function normId(v){ return String((v ?? '')).trim(); }
+function normNum(v){
+  if (v === null || v === undefined || v === '') return '';
+  const n = parseInt(String(v).trim(), 10);
+  return Number.isFinite(n) ? String(n) : String(v).trim();
+}
+
 function parseDataFile(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const shows = new Map();
@@ -407,34 +384,34 @@ function parseDataFile(text) {
     const kind = (f[0] || '').toLowerCase();
 
     if (kind === 'show') {
-      const [, id, name, overview, numSeasons, firstAirDate, status, source, schedule] = f;
+      const [, id0, name, overview, numSeasons, firstAirDate, status, source, schedule] = f;
+      const id = normId(id0);
       if (!id) continue;
       shows.set(id, { id, name, overview, numSeasons, firstAirDate, status, source, schedule });
 
     } else if (kind === 'season') {
-      const [, showId, seasonNum, year, overview] = f;
+      const [, showId0, seasonNum0, year, overview] = f;
+      const showId   = normId(showId0);
+      const seasonNum= normNum(seasonNum0);
       if (!showId || !seasonNum) continue;
       if (!seasonsByShow.has(showId)) seasonsByShow.set(showId, new Map());
-      seasonsByShow.get(showId).set(String(seasonNum), {
-        showId, seasonNum: String(seasonNum), year, overview, episodes: []
-      });
+      seasonsByShow.get(showId).set(seasonNum, { showId, seasonNum, year, overview, episodes: [] });
 
     } else if (kind === 'episode') {
-      const [, showId, sNum, epNum, name, airDate, desc, runtime, source] = f;
-      if (!showId || !sNum || !epNum) {
-        console.warn('Skipping episode with missing keys:', f);
-        continue;
-      }
+      const [, showId0, sNum0, epNum0, name, airDate, desc, runtime, source] = f;
+      const showId = normId(showId0);
+      const sNum   = normNum(sNum0);
+      const epNum  = normNum(epNum0);
+      if (!showId || !sNum || !epNum) { console.warn('Skipping episode with missing keys:', f); continue; }
       if (!seasonsByShow.has(showId)) seasonsByShow.set(showId, new Map());
-      if (!seasonsByShow.get(showId).has(String(sNum))) {
-        seasonsByShow.get(showId).set(String(sNum), { showId, seasonNum: String(sNum), year: (airDate||'').slice(0,4), overview:'', episodes: [] });
+      if (!seasonsByShow.get(showId).has(sNum)) {
+        seasonsByShow.get(showId).set(sNum, { showId, seasonNum: sNum, year: (airDate||'').slice(0,4), overview:'', episodes: [] });
       }
-      seasonsByShow.get(showId).get(String(sNum)).episodes.push({
-        showId, seasonNum: String(sNum), epNum: String(epNum), name, airDate, desc, runtime, source
-      });
+      seasonsByShow.get(showId).get(sNum).episodes.push({ showId, seasonNum: sNum, epNum, name, airDate, desc, runtime, source });
 
     } else if (kind === 'movie') {
-      const [, id, name, overview, releaseDate, rating, runtime, source] = f;
+      const [, id0, name, overview, releaseDate, rating, runtime, source] = f;
+      const id = normId(id0);
       if (!id) continue;
       movies.push({ id, name, overview, releaseDate, rating, runtime, source });
     }
@@ -457,14 +434,12 @@ function splitPipes(line) {
 
 /* ---------- RENDER ---------- */
 function renderAll({ shows, seasonsByShow, movies }, usedUrl) {
-  const showsRoot = qs('#shows-root');
-  const moviesRoot = qs('#movies-root');
-  showsRoot.innerHTML = '';
-  moviesRoot.innerHTML = '';
-
+  qs('#shows-root').innerHTML = '';
+  qs('#movies-root').innerHTML = '';
   gLastModel = { shows, seasonsByShow, movies };
   qs('#dataMeta').textContent = `Data: ${usedUrl || '(unknown)'}  •  Build: ${APP_VERSION}`;
   gLastUsed = usedUrl || '';
+  renderShowsAndMovies();  // initial render
 }
 
 function renderShowsAndMovies() {
@@ -489,15 +464,9 @@ function renderShowsAndMovies() {
     head.className = 'table';
     head.innerHTML = `
       <div class="thead row">
-        <div class="head">Title</div>
-        <div class="head">Release</div>
-        <div class="head">Length</div>
-        <div class="head">Overview</div>
-        <div class="head">Source</div>
-        <div class="head">VidJoy</div>
-        <div class="head">VidSrc</div>
-        <div class="head">Mapple</div>
-        <div class="head">NunFlix</div>
+        <div class="head">Title</div><div class="head">Release</div><div class="head">Length</div>
+        <div class="head">Overview</div><div class="head">Source</div><div class="head">VidJoy</div>
+        <div class="head">VidSrc</div><div class="head">Mapple</div><div class="head">NunFlix</div>
         <div class="head">Status / Apps</div>
       </div>`;
     moviesRoot.appendChild(head);
@@ -505,20 +474,30 @@ function renderShowsAndMovies() {
   for (const m of movies) moviesRoot.appendChild(renderMovie(m));
 }
 
+function countShow(seasonsMap){
+  const sCount = seasonsMap.size;
+  let eCount = 0;
+  for (const s of seasonsMap.values()) eCount += (s.episodes||[]).length;
+  return { sCount, eCount };
+}
+
 function renderShow(show, seasonsMap) {
   const wrap = document.createElement('section');
   wrap.className = 'show';
   wrap.dataset.tmdbId = show.id;
+
+  const { sCount, eCount } = countShow(seasonsMap);
 
   const chips = [];
   if (show.firstAirDate) chips.push(`<span class="chip">${esc(show.firstAirDate)}</span>`);
   if (show.status)       chips.push(`<span class="chip">${esc(show.status)}</span>`);
   if (show.source)       chips.push(`<span class="chip">${esc(show.source)}</span>`);
   if (show.schedule)     chips.push(`<span class="chip">${esc(show.schedule)}</span>`);
+  chips.push(`<span class="chip">Seasons: ${sCount} • Episodes: ${eCount}</span>`);
   chips.push(`<a class="link" href="${links.tmdbShow(show.id)}" target="_blank" rel="noopener">TMDB</a>`);
 
   wrap.innerHTML = `
-    <header class="show-head" onclick="toggleSection(this)" tabindex="0" role="button" aria-expanded="false">
+    <header class="show-head" tabindex="0" role="button" aria-expanded="false">
       <span class="chev">▸</span>
       <div class="name">${esc(show.name)}</div>
       <div class="chips">${chips.join(' ')}</div>
@@ -529,10 +508,52 @@ function renderShow(show, seasonsMap) {
     </div>
   `;
 
+  // attach click after HTML exists
+  const head = qs('.show-head', wrap);
+  head.addEventListener('click', () => onShowToggle(head, wrap, show.id));
+
+  // Pre-render season headers so you *see* them immediately when you open the show
+  // (Bodies will still be collapsed.)
   const seasonsRoot = qs('.seasons', wrap);
   const seasonsList = [...seasonsMap.values()].sort((a,b) => parseInt(a.seasonNum,10) - parseInt(b.seasonNum,10));
   for (const s of seasonsList) seasonsRoot.appendChild(renderSeason(show, s));
+
   return wrap;
+}
+
+function onShowToggle(headEl, showWrap, showId){
+  // Toggle the show body visibility
+  const body = headEl.nextElementSibling;
+  const chev = headEl.querySelector('.chev');
+  const expanded = headEl.getAttribute('aria-expanded') === 'true';
+  headEl.setAttribute('aria-expanded', String(!expanded));
+  if (chev) chev.textContent = expanded ? '▸' : '▾';
+  if (body) body.style.display = expanded ? 'none' : '';
+
+  // If opening, ensure seasons are hydrated and auto-open the first season
+  if (!expanded) {
+    ensureShowHydrated(showWrap, showId);
+
+    // auto-open first season
+    const firstSeasonHead = qs('.season-head', showWrap);
+    if (firstSeasonHead && firstSeasonHead.getAttribute('aria-expanded') !== 'true') {
+      toggleSeason(firstSeasonHead);
+    }
+  }
+}
+
+function ensureShowHydrated(showWrap, showId){
+  // If the model has seasons but DOM has none, attach them now (defensive)
+  const seasonsRoot = qs('.seasons', showWrap);
+  if (!seasonsRoot) return;
+
+  const seasonsInDom = qsa(':scope > .seasons > .season', showWrap).length;
+  const seasonsMap = gLastModel?.seasonsByShow?.get(showId) || new Map();
+  if (seasonsInDom === 0 && seasonsMap.size > 0) {
+    console.warn('Hydrating seasons on expand for show', showId);
+    const list = [...seasonsMap.values()].sort((a,b)=>parseInt(a.seasonNum,10)-parseInt(b.seasonNum,10));
+    for (const s of list) seasonsRoot.appendChild(renderSeason({id:showId}, s));
+  }
 }
 
 function renderSeason(show, season) {
@@ -541,7 +562,7 @@ function renderSeason(show, season) {
   el.dataset.season = season.seasonNum;
 
   el.innerHTML = `
-    <header class="season-head" onclick="toggleSection(this)" tabindex="0" role="button" aria-expanded="false">
+    <header class="season-head" tabindex="0" role="button" aria-expanded="false">
       <span class="chev">▸</span>
       <div>Season ${esc(season.seasonNum)} ${season.year?`(${esc(season.year)})`:''}</div>
       <div class="season-sub">${esc(season.overview || '')}</div>
@@ -550,7 +571,19 @@ function renderSeason(show, season) {
       ${renderEpisodeTable(show.id, season)}
     </div>
   `;
+
+  const head = qs('.season-head', el);
+  head.addEventListener('click', () => toggleSeason(head));
   return el;
+}
+
+function toggleSeason(headEl){
+  const body = headEl.nextElementSibling;
+  const chev = headEl.querySelector('.chev');
+  const expanded = headEl.getAttribute('aria-expanded') === 'true';
+  headEl.setAttribute('aria-expanded', String(!expanded));
+  if (chev) chev.textContent = expanded ? '▸' : '▾';
+  if (body) body.style.display = expanded ? 'none' : '';
 }
 
 function renderEpisodeTable(showId, season) {
@@ -667,7 +700,7 @@ function toggle(targetEl) {
   if (chev) chev.textContent = expanded ? '▸' : '▾';
   if (body) body.style.display = expanded ? 'none' : '';
 }
-window.toggleSection = function (el) { toggle(el); };
+window.toggleSection = function (el) { toggle(el); }; // kept for compatibility
 window.toggleComplete = function () { document.body.classList.toggle('hide-complete'); };
 window.toggleWatched  = function () { document.body.classList.toggle('watching-only'); };
 
@@ -704,7 +737,6 @@ function init() {
   modal.st.episodes=qs('#stEpisodes');
   modal.pillTimer = qs('#pillTimer');
   qs('#pillBuild').textContent = `Build: ${APP_VERSION}`;
-
   qs('#btnCloseModal').addEventListener('click', ()=> modal.close());
   qs('#btnOpenData').addEventListener('click', ()=> { if (gLastUsed) window.open(gLastUsed, '_blank'); });
   qs('#btnCopyReport').addEventListener('click', ()=>{
@@ -745,12 +777,6 @@ function init() {
       card.classList.toggle('open', open);
       body.style.display = open ? 'block':'none';
       btn.textContent = open ? '▾':'▸';
-      if (open && card.id === 'cardShows' && !qs('#shows-root').children.length) {
-        renderShowsAndMovies();
-      }
-      if (open && card.id === 'cardMovies' && !qs('#movies-root').children.length) {
-        renderShowsAndMovies();
-      }
     });
   });
 
@@ -766,12 +792,12 @@ function init() {
     e.currentTarget.textContent = document.body.classList.contains('watching-only') ? 'Show All' : 'Watching Only';
   });
   qs('#btnExpandAll').addEventListener('click', ()=>{
-    qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='true')  toggle(h); });
-    qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='true') toggle(h); });
+    qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='true')  onShowToggle(h, h.parentElement, h.parentElement?.dataset.tmdbId); });
+    qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='true') toggleSeason(h); });
   });
   qs('#btnCollapseAll').addEventListener('click', ()=>{
-    qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false') toggle(h); });
-    qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false')  toggle(h); });
+    qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false') toggleSeason(h); });
+    qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false')  onShowToggle(h, h.parentElement, h.parentElement?.dataset.tmdbId); });
   });
 
   // QA drawer toggle + stats render
@@ -820,10 +846,10 @@ function init() {
     }
   });
 
-  // Wire Reload button to open modal and show progress
+  // Wire Reload button
   qs('#btnReload').addEventListener('click', ()=> load(true, {showModal:true}));
 
-  // Initial load (no modal to keep startup clean)
+  // Initial load
   load(false, {showModal:false});
 }
 
@@ -845,54 +871,36 @@ function fillQA(){
   qs('#qaTried').textContent = (gLastTried||[]).join('\n') || '(none)';
 }
 
-/* Main load with optional modal */
+/* Main load with optional modal (same behavior as 4.2) */
 async function load(force, opts={showModal:false}){
   const start = performance.now();
   const err = qs('#error'); err.textContent='';
-
   if (opts.showModal) modal.open();
-
-  modal.log(`Load started ${new Date().toLocaleString()}`);
-  modal.log(force ? 'Cache: reload' : 'Cache: no-store');
+  modal.log(`Load started ${new Date().toLocaleString()}`); modal.log(force ? 'Cache: reload' : 'Cache: no-store');
 
   const progress = (msg)=> modal.log(msg);
   const {text, tried, used, size, ms} = await fetchData(force, progress);
-  gLastTried = tried || [];
-  modal.setTimer(Math.round(performance.now()-start));
-  if (used) modal.setUrl(used);
+  gLastTried = tried || []; modal.setTimer(Math.round(performance.now()-start)); if (used) modal.setUrl(used);
 
   let diag = { build: APP_VERSION, used: used || null, tried: tried || [], fetchMs: ms || null, size: size || null, ok:false };
   if(!text){
     const m = 'Could not load data file.';
-    err.textContent = m;
-    modal.setError(m);
-    gLastDiag = diag;
-    return;
+    err.textContent = m; modal.setError(m); gLastDiag = diag; return;
   }
   try{
     modal.log('Parsing data…');
     const model = parseDataFile(text);
-    gLastText = text;
-    gLastModel = model;
+    gLastText = text; gLastModel = model;
     renderAll(model, used);
-    renderShowsAndMovies();
-
     const stats = buildStats(model);
-    modal.setCounts({
-      shows: stats.showCount,
-      movies: stats.movieCount,
-      seasons: stats.totalSeasons,
-      episodes: stats.totalEpisodes
-    });
+    modal.setCounts({ shows: stats.showCount, movies: stats.movieCount, seasons: stats.totalSeasons, episodes: stats.totalEpisodes });
     modal.log(`Parsed OK. Shows=${stats.showCount}, Movies=${stats.movieCount}, Seasons=${stats.totalSeasons}, Episodes=${stats.totalEpisodes}`);
-    diag.ok = true; diag.stats = stats;
-    gLastDiag = diag;
+    diag.ok = true; diag.stats = stats; gLastDiag = diag;
   }catch(e){
     console.error(e);
     err.textContent = 'Parse error: '+e.message;
     modal.setError('Parse error: '+e.message);
-    diag.error = String(e.message || e);
-    gLastDiag = diag;
+    diag.error = String(e.message || e); gLastDiag = diag;
   }
 }
 
