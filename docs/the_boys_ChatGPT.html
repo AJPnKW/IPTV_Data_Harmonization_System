@@ -3,17 +3,20 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>The Boys Shows • Dark UI (TBS-DARK-4.0)</title>
+<title>The Boys Shows • Dark UI (TBS-DARK-4.2)</title>
 <!--
   the_boys_ChatGPT.html
   Dark, high-contrast UI with show→season→episode accordions.
-  Uses NO watchStatus in data; status is stored in localStorage only.
-  Schema:
+  Adds: Reload Status Window (progress, errors, URL tries, counts), diagnostics tools.
+  No watchStatus in data file; status is stored in localStorage only.
+
+  Data Schema (v1, no watchStatus):
     show|tmdb_id|name|overview|numSeasons|firstAirDate|status|source|schedule
     season|tmdb_id|seasonNum|year|overview
     episode|tmdb_id|seasonNum|epNum|name|airDate|desc|runtime|source
     movie|tmdb_id|name|overview|releaseDate|rating|runtime|source
-  Version: 4.0  |  2025-10-18
+
+  Version: 4.2  |  2025-10-18
 -->
 
 <style>
@@ -22,9 +25,9 @@
     --panel: #171a1f;
     --panel2:#1c2027;
 
-    --band-show:   #232832; /* shows */
-    --band-season: #2a3140; /* seasons */
-    --band-ep:     #30384a; /* episodes/movies rows */
+    --band-show:   #232832;
+    --band-season: #2a3140;
+    --band-ep:     #30384a;
 
     --border: #283040;
     --text:   #f3f6fb;
@@ -40,15 +43,21 @@
     --chip:#1f2530;
     --focus:#ffd666;
     --link:#a8d1ff;
+    --accent:#7ab9ff;
+    --shadow: rgba(0,0,0,.5);
   }
 
   html,body{ background:var(--bg); color:var(--text); margin:0; font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial; }
   .container{ max-width:1200px; margin:24px auto 72px; padding:0 16px; }
 
-  header.app{ text-align:center; margin-bottom:14px; }
-  h1.title{ margin:0 0 10px; font-size:clamp(22px,2.6vw,30px); font-weight:900; letter-spacing:.2px; }
+  header.app{ margin-bottom:14px; }
+  .topline{ display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; justify-content:space-between; }
+  h1.title{ margin:0; font-size:clamp(22px,2.6vw,30px); font-weight:900; letter-spacing:.2px; }
+  .meta{ margin-top:4px; color:var(--muted); font-size:13px; }
+  .version{ font-weight:900; background:rgba(122,185,255,.12); border:1px solid #27486e; color:var(--accent);
+            padding:3px 8px; border-radius:999px; }
 
-  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
   .btn{
     appearance:none; border:1px solid var(--border); background:var(--panel2); color:var(--text);
     padding:9px 14px; border-radius:10px; cursor:pointer; font-weight:800;
@@ -56,7 +65,17 @@
   .btn.ticked{ box-shadow:0 0 0 2px rgba(79,182,255,.25) inset; border-color:#61b7ff; }
   .btn:focus{ outline:3px solid var(--focus); outline-offset:2px; }
 
-  .meta{ margin-top:8px; text-align:center; color:var(--muted); font-size:13px; }
+  /* QA drawer */
+  .qa{
+    margin-top:12px; background:var(--panel); border:1px solid var(--border); border-radius:12px; overflow:hidden;
+  }
+  .qa-head{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; cursor:pointer;
+    background:linear-gradient(180deg, #1a2230, #171f2b); font-weight:900;
+  }
+  .qa-body{ display:none; padding:10px 12px; }
+  .qa.open .qa-body{ display:block; }
+  .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
 
   /* Sections (Shows/Movies) */
   .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-top:16px; }
@@ -109,15 +128,12 @@
   .tbody .row:nth-child(odd){ background:var(--band-ep); }
   .tbody .row:nth-child(even){ background:#2c3450; }
 
-  /* Movies grid simpler */
   .row.movie{ grid-template-columns: 1.7fr 140px 100px minmax(320px,2fr) 150px 96px 96px 96px 74px 210px; }
 
-  /* Description truncation */
   .desc{ max-height:1.7em; overflow:hidden; text-overflow:ellipsis; }
   .desc.open{ max-height:none; white-space:normal; }
   .more{ margin-left:8px; font-weight:900; color:var(--link); cursor:pointer; }
 
-  /* Buttons + icons */
   .btn-mini{
     border:1px solid var(--border); background:#212938; color:#e8edf3; border-radius:8px;
     padding:6px 8px; cursor:pointer; font-weight:900; font-size:13px; margin-right:6px;
@@ -130,37 +146,70 @@
   a.link{ color:var(--link); text-decoration:none; border-bottom:1px dotted #77b8ff; }
   a.link:focus{ outline:3px solid var(--focus); outline-offset:2px; }
 
-  /* Filters via body classes */
   body.hide-complete .status-watched{ display:none !important; }
   body.watching-only .row:not(.status-watching){ display:none !important; }
 
-  @media (max-width:1100px){
-    .row{ grid-template-columns:58px 1.4fr 128px 90px minmax(240px,2fr) 130px 92px 92px 92px 68px 190px; }
-    .row.movie{ grid-template-columns:1.6fr 128px 90px minmax(280px,2fr) 140px 92px 92px 92px 68px 190px; }
+  /* Loading modal */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; z-index:1000;
   }
-  @media (max-width:860px){
-    .chips{ display:none; }
-    .row{ grid-template-columns:52px 1.3fr 118px 84px minmax(220px,2fr) 120px 88px 88px 88px 64px 180px; }
+  .modal{
+    position:fixed; inset:auto 0 0 0; margin:auto; top:10vh; width:min(900px,92vw);
+    background:var(--panel2); border:1px solid var(--border); border-radius:14px; box-shadow:0 12px 28px var(--shadow);
+    display:none; z-index:1001;
   }
-  @media (max-width:720px){
-    .row{ grid-template-columns:48px 1fr 110px 78px minmax(200px,2fr) 0px 84px 84px 84px 60px 160px; }
-    .row .cell:nth-child(6){ display:none; } /* hide 'Source' */
+  .modal.open, .modal-backdrop.open{ display:block; }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 14px; border-bottom:1px solid var(--border); font-weight:900;
+    background:linear-gradient(180deg, #1a2230, #171f2b);
   }
+  .modal-body{ padding:10px 14px; }
+  .modal-foot{ padding:10px 14px; border-top:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap; }
+  .pill{ background:#1e2634; border:1px solid var(--border); padding:2px 8px; border-radius:999px; font-weight:800; font-size:12px; color:#cfe2ff; }
+  .log{
+    background:#0f131c; border:1px solid #24314a; color:#d6e4ff; border-radius:10px; padding:10px; height:240px; overflow:auto;
+    font:13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; white-space:pre-wrap;
+  }
+  .statgrid{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; margin:8px 0; }
+  .stat{ background:#172033; border:1px solid #2a3a58; border-radius:10px; padding:8px; text-align:center; }
+  .stat b{ display:block; font-size:20px; }
+  .danger{ color:var(--danger); }
 </style>
 </head>
 <body>
   <div class="container">
     <header class="app">
-      <h1 class="title">The Boys Shows</h1>
+      <div class="topline">
+        <h1 class="title">The Boys Shows</h1>
+        <span class="version">TBS-DARK-4.2</span>
+      </div>
       <div class="toolbar" role="toolbar">
         <button class="btn" id="btnHideComplete">Hide Complete</button>
         <button class="btn" id="btnWatchingOnly">Watching Only</button>
         <button class="btn" id="btnExpandAll">Expand All</button>
         <button class="btn" id="btnCollapseAll">Collapse All</button>
         <button class="btn" id="btnReload">Reload Data</button>
+        <button class="btn" id="btnQA">QA / Stats</button>
       </div>
       <div class="meta" id="dataMeta"></div>
     </header>
+
+    <!-- QA Drawer -->
+    <section class="qa" id="qaBox" hidden>
+      <div class="qa-head" id="qaHead">▸ QA / Stats</div>
+      <div class="qa-body">
+        <div id="qaSummary" class="mono"></div>
+        <details style="margin-top:10px;">
+          <summary><b>Per-show counts</b></summary>
+          <div id="qaPerShow" class="mono" style="margin-top:8px;"></div>
+        </details>
+        <details style="margin-top:10px;">
+          <summary><b>Tried data URLs</b></summary>
+          <pre id="qaTried" class="mono" style="white-space:pre-wrap;background:#12161f;border:1px solid #2a3448;padding:8px;border-radius:8px;color:#cfdaf0;"></pre>
+        </details>
+      </div>
+    </section>
 
     <!-- Shows -->
     <section class="card" id="cardShows">
@@ -185,13 +234,47 @@
     <p id="error" style="color:#ff9e9e; margin-top:12px;"></p>
   </div>
 
+  <!-- Reload / Status Modal -->
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal" id="statusModal" role="dialog" aria-modal="true" aria-labelledby="statusTitle">
+    <div class="modal-head">
+      <div id="statusTitle">Reload status</div>
+      <div>
+        <span class="pill" id="pillBuild">Build: 4.2</span>
+        <span class="pill" id="pillTimer">0 ms</span>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:6px;">
+        <span>Data source:</span>
+        <a id="statusDataUrl" href="#" target="_blank" rel="noopener" class="link">(unknown)</a>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><b id="stShows">0</b>Shows</div>
+        <div class="stat"><b id="stMovies">0</b>Movies</div>
+        <div class="stat"><b id="stSeasons">0</b>Seasons</div>
+        <div class="stat"><b id="stEpisodes">0</b>Episodes</div>
+      </div>
+      <div id="statusError" class="danger" style="min-height:1.2em;"></div>
+      <div class="log" id="statusLog"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="btnCopyReport">Copy report</button>
+      <button class="btn" id="btnDownloadDiag">Download diagnostics</button>
+      <button class="btn" id="btnOpenData">Open data URL</button>
+      <button class="btn" id="btnDumpModel">Dump model JSON</button>
+      <button class="btn" id="btnClearState">Clear local watch-state</button>
+      <div style="margin-left:auto;"></div>
+      <button class="btn" id="btnCloseModal">Close</button>
+    </div>
+  </div>
+
 <script>
 /* ---------- CONFIG ---------- */
-/* Default to local filename; the loader will also try your RAW links and ?data= override. */
+const APP_VERSION = 'TBS-DARK-4.2';
 const DATA_URL = 'show_and_movie_data.tile.txt';
-const NS       = 'ajp.watchstatus';  // localStorage namespace
+const NS       = 'ajp.watchstatus';
 
-/* Base link builders */
 const links = {
   tmdbShow:   (id)        => `https://www.themoviedb.org/tv/${id}`,
   tmdbMovie:  (id)        => `https://www.themoviedb.org/movie/${id}`,
@@ -207,11 +290,54 @@ const links = {
   prime:       (q)        => `https://www.primevideo.com/search/ref=atv_sr_sug_?phrase=${encodeURIComponent(q)}`
 };
 
-/* ---------- UTIL ---------- */
 const qs  = (s, r = document) => r.querySelector(s);
 const qsa = (s, r = document) => [...r.querySelectorAll(s)];
-const toInt = (x) => (x == null || x === '' ? null : parseInt(x, 10));
 
+/* ---------- GLOBAL STATE ---------- */
+let gLastModel = null;
+let gLastText  = '';
+let gLastUsed  = '';
+let gLastTried = [];
+let gLastDiag  = {};
+
+/* ---------- STATUS MODAL ---------- */
+const modal = {
+  backdrop: null, root: null, logEl: null, errEl: null, urlEl: null,
+  st: { shows: null, movies: null, seasons: null, episodes: null },
+  pillTimer: null,
+  open(){
+    this.backdrop.classList.add('open');
+    this.root.classList.add('open');
+    this.clear();
+  },
+  close(){
+    this.root.classList.remove('open');
+    this.backdrop.classList.remove('open');
+  },
+  clear(){
+    this.logEl.textContent='';
+    this.errEl.textContent='';
+    this.st.shows.textContent='0';
+    this.st.movies.textContent='0';
+    this.st.seasons.textContent='0';
+    this.st.episodes.textContent='0';
+    this.urlEl.textContent='(unknown)';
+    this.urlEl.href='#';
+    this.pillTimer.textContent='0 ms';
+  },
+  log(line){ this.logEl.textContent += (this.logEl.textContent ? '\n' : '') + line; this.logEl.scrollTop = this.logEl.scrollHeight; },
+  setError(msg){ this.errEl.textContent = msg || ''; },
+  setUrl(u){ this.urlEl.textContent = u || '(unknown)'; if(u){ this.urlEl.href = u; } },
+  setCounts({shows, movies, seasons, episodes}){
+    this.st.shows.textContent = shows;
+    this.st.movies.textContent = movies;
+    this.st.seasons.textContent = seasons;
+    this.st.episodes.textContent = episodes;
+  },
+  setTimer(ms){ this.pillTimer.textContent = `${ms} ms`; }
+};
+
+/* ---------- STORAGE HELPERS ---------- */
 function keyFor(type, tmdbId, seasonNum = null, epNum = null) {
   let k = `${NS}.${type}.${tmdbId}`;
   if (seasonNum != null) k += `.S${seasonNum}`;
@@ -225,53 +351,52 @@ function setStatus(type, tmdbId, seasonNum, epNum, status) {
   localStorage.setItem(keyFor(type, tmdbId, seasonNum, epNum), status);
 }
 
-/* Robust fetch: local → site paths → RAW; ?data= override supported */
-async function fetchData(force=false){
+/* ---------- LOADER (prefer RAW first) ---------- */
+async function fetchData(force=false, progress=()=>{}){
   const override = new URLSearchParams(location.search).get('data');
   const baseDir  = location.href.substring(0, location.href.lastIndexOf('/')+1);
 
-  const RAW1 = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/refs/heads/main/docs/' + DATA_URL;
-  const RAW2 = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/' + DATA_URL;
+  const RAW_HEADS = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/refs/heads/main/docs/' + DATA_URL;
+  const RAW_MAIN  = 'https://raw.githubusercontent.com/AJPnKW/IPTV_Data_Harmonization_System/main/docs/' + DATA_URL;
 
   const candidates = [
     override,
-    DATA_URL,
+    RAW_HEADS,
+    RAW_MAIN,
     baseDir + DATA_URL,
     `/IPTV_Data_Harmonization_System/${DATA_URL}`,
     `/IPTV_Data_Harmonization_System/docs/${DATA_URL}`,
-    RAW1, RAW2
+    DATA_URL
   ].filter(Boolean);
 
   const tried=[];
   for (const url of [...new Set(candidates)]) {
     try{
+      progress(`Trying: ${url}`);
+      const t0 = performance.now();
       const r = await fetch(url, { cache: force ? 'reload' : 'no-store' });
-      tried.push(`${url} [${r.status}]`);
+      const t1 = performance.now();
+      const ms = Math.round(t1 - t0);
+      tried.push(`${url} [${r.status}] (${ms} ms)`);
+      progress(`→ ${r.status} in ${ms} ms`);
       if (r.ok) {
         const txt = await r.text();
-        if (txt && txt.trim()) return { text: txt, used: url, tried };
+        const size = new Blob([txt]).size;
+        progress(`Fetched OK (${size} bytes).`);
+        if (txt && txt.trim()) return { text: txt, used: url, tried, size, ms };
+        progress('Response is empty text.');
       }
-    }catch(e){ tried.push(`${url} [ERR]`); }
+    }catch(e){ tried.push(`${url} [ERR]`); progress(`ERR: ${e.message}`); }
   }
   return { text: null, used: null, tried };
 }
 
 /* ---------- PARSER (v1 schema; no watchStatus) ---------- */
-/* Lines:
-   show|tmdb_id|name|overview|numSeasons|firstAirDate|status|source|schedule
-   season|tmdb_id|seasonNum|year|overview
-   episode|tmdb_id|seasonNum|epNum|name|airDate|desc|runtime|source
-   movie|tmdb_id|name|overview|releaseDate|rating|runtime|source
-   - Comments (#...) ignored
-   - Section markers SHOWS/SEASONS/EPISODES/MOVIES ignored
-   - Quotes allowed around fields that contain '|' or \n
-*/
 function parseDataFile(text) {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const shows = new Map();
   const movies = [];
-  const seasonsByShow = new Map(); // tmdb -> Map(seasonNum -> seasonObj)
-  const episodesByShow = new Map(); // tmdb -> Map(seasonNum -> [epObj])
+  const seasonsByShow = new Map();
 
   for (const rawLine of lines) {
     if (!rawLine || rawLine.startsWith('#')) continue;
@@ -282,15 +407,11 @@ function parseDataFile(text) {
     const kind = (f[0] || '').toLowerCase();
 
     if (kind === 'show') {
-      // show|tmdb_id|name|overview|numSeasons|firstAirDate|status|source|schedule
       const [, id, name, overview, numSeasons, firstAirDate, status, source, schedule] = f;
       if (!id) continue;
-      shows.set(id, {
-        id, name, overview, numSeasons, firstAirDate, status, source, schedule
-      });
+      shows.set(id, { id, name, overview, numSeasons, firstAirDate, status, source, schedule });
 
     } else if (kind === 'season') {
-      // season|tmdb_id|seasonNum|year|overview
       const [, showId, seasonNum, year, overview] = f;
       if (!showId || !seasonNum) continue;
       if (!seasonsByShow.has(showId)) seasonsByShow.set(showId, new Map());
@@ -299,7 +420,6 @@ function parseDataFile(text) {
       });
 
     } else if (kind === 'episode') {
-      // episode|tmdb_id|seasonNum|epNum|name|airDate|desc|runtime|source
       const [, showId, sNum, epNum, name, airDate, desc, runtime, source] = f;
       if (!showId || !sNum || !epNum) {
         console.warn('Skipping episode with missing keys:', f);
@@ -307,14 +427,13 @@ function parseDataFile(text) {
       }
       if (!seasonsByShow.has(showId)) seasonsByShow.set(showId, new Map());
       if (!seasonsByShow.get(showId).has(String(sNum))) {
-        // synthesize season if not declared
         seasonsByShow.get(showId).set(String(sNum), { showId, seasonNum: String(sNum), year: (airDate||'').slice(0,4), overview:'', episodes: [] });
       }
-      const ep = { showId, seasonNum: String(sNum), epNum: String(epNum), name, airDate, desc, runtime, source };
-      seasonsByShow.get(showId).get(String(sNum)).episodes.push(ep);
+      seasonsByShow.get(showId).get(String(sNum)).episodes.push({
+        showId, seasonNum: String(sNum), epNum: String(epNum), name, airDate, desc, runtime, source
+      });
 
     } else if (kind === 'movie') {
-      // movie|tmdb_id|name|overview|releaseDate|rating|runtime|source
       const [, id, name, overview, releaseDate, rating, runtime, source] = f;
       if (!id) continue;
       movies.push({ id, name, overview, releaseDate, rating, runtime, source });
@@ -324,7 +443,6 @@ function parseDataFile(text) {
   return { shows, seasonsByShow, movies };
 }
 
-/* CSV-like splitter for pipes with "quoted|fields" and \n escapes */
 function splitPipes(line) {
   const out = []; let cur = '', inQ = false;
   for (let i = 0; i < line.length; i++) {
@@ -343,10 +461,21 @@ function renderAll({ shows, seasonsByShow, movies }, usedUrl) {
   const moviesRoot = qs('#movies-root');
   showsRoot.innerHTML = '';
   moviesRoot.innerHTML = '';
-  qs('#dataMeta').textContent = usedUrl ? `Data: ${usedUrl}` : '';
 
-  // SHOWS (collapsed by default)
-  // Sort by show name for nicer UX
+  gLastModel = { shows, seasonsByShow, movies };
+  qs('#dataMeta').textContent = `Data: ${usedUrl || '(unknown)'}  •  Build: ${APP_VERSION}`;
+  gLastUsed = usedUrl || '';
+}
+
+function renderShowsAndMovies() {
+  if (!gLastModel) return;
+  const { shows, seasonsByShow, movies } = gLastModel;
+
+  const showsRoot = qs('#shows-root');
+  const moviesRoot = qs('#movies-root');
+  showsRoot.innerHTML = '';
+  moviesRoot.innerHTML = '';
+
   const showList = [...shows.values()].sort((a,b) => (a.name||'').localeCompare(b.name||''));
   for (const show of showList) {
     const seasonsMap = seasonsByShow.get(show.id) || new Map();
@@ -354,7 +483,6 @@ function renderAll({ shows, seasonsByShow, movies }, usedUrl) {
   }
   qs('#showsCount').textContent  = String(showList.length);
 
-  // MOVIES (header + rows)
   qs('#moviesCount').textContent = String(movies.length);
   if (movies.length) {
     const head = document.createElement('div');
@@ -403,10 +531,7 @@ function renderShow(show, seasonsMap) {
 
   const seasonsRoot = qs('.seasons', wrap);
   const seasonsList = [...seasonsMap.values()].sort((a,b) => parseInt(a.seasonNum,10) - parseInt(b.seasonNum,10));
-  for (const s of seasonsList) {
-    seasonsRoot.appendChild(renderSeason(show, s));
-  }
-
+  for (const s of seasonsList) seasonsRoot.appendChild(renderSeason(show, s));
   return wrap;
 }
 
@@ -531,7 +656,7 @@ function renderMovie(m) {
   return row;
 }
 
-/* ---------- GLOBAL TOGGLES ---------- */
+/* ---------- TOGGLES & QA ---------- */
 function toggle(targetEl) {
   const isHeader = targetEl.classList.contains('show-head') || targetEl.classList.contains('season-head');
   if (!isHeader) return;
@@ -546,8 +671,71 @@ window.toggleSection = function (el) { toggle(el); };
 window.toggleComplete = function () { document.body.classList.toggle('hide-complete'); };
 window.toggleWatched  = function () { document.body.classList.toggle('watching-only'); };
 
+function buildStats(model){
+  const { shows, seasonsByShow, movies } = model;
+  const showCount = shows.size;
+  const movieCount = movies.length;
+
+  let totalSeasons = 0, totalEpisodes = 0;
+  const perShow = [];
+  for (const [showId, show] of shows.entries()) {
+    const smap = seasonsByShow.get(showId) || new Map();
+    const sCount = smap.size;
+    let eCount = 0;
+    for (const s of smap.values()) eCount += (s.episodes||[]).length;
+    totalSeasons += sCount; totalEpisodes += eCount;
+    perShow.push({ show: show.name || showId, seasons: sCount, episodes: eCount });
+  }
+  perShow.sort((a,b)=>a.show.localeCompare(b.show));
+  return { showCount, movieCount, totalSeasons, totalEpisodes, perShow };
+}
+
 /* ---------- INIT + EVENTS ---------- */
 function init() {
+  // Modal wiring
+  modal.backdrop  = qs('#modalBackdrop');
+  modal.root      = qs('#statusModal');
+  modal.logEl     = qs('#statusLog');
+  modal.errEl     = qs('#statusError');
+  modal.urlEl     = qs('#statusDataUrl');
+  modal.st.shows  = qs('#stShows');
+  modal.st.movies = qs('#stMovies');
+  modal.st.seasons= qs('#stSeasons');
+  modal.st.episodes=qs('#stEpisodes');
+  modal.pillTimer = qs('#pillTimer');
+  qs('#pillBuild').textContent = `Build: ${APP_VERSION}`;
+
+  qs('#btnCloseModal').addEventListener('click', ()=> modal.close());
+  qs('#btnOpenData').addEventListener('click', ()=> { if (gLastUsed) window.open(gLastUsed, '_blank'); });
+  qs('#btnCopyReport').addEventListener('click', ()=>{
+    const text = modal.logEl.textContent || '';
+    navigator.clipboard.writeText(text + '\n' + (modal.errEl.textContent||'')).catch(()=>{});
+  });
+  qs('#btnDownloadDiag').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(gLastDiag||{}, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `diag_${Date.now()}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  });
+  qs('#btnDumpModel').addEventListener('click', ()=>{
+    const obj = {
+      used: gLastUsed, tried: gLastTried,
+      shows: [...(gLastModel?.shows||new Map()).values()],
+      seasons: Object.fromEntries(
+        [...(gLastModel?.seasonsByShow||new Map()).entries()]
+          .map(([k,v])=>[k,[...v.values()]])
+      ),
+      movies: gLastModel?.movies || []
+    };
+    const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `model_${Date.now()}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  });
+  qs('#btnClearState').addEventListener('click', ()=>{
+    const keys = Object.keys(localStorage).filter(k=>k.startsWith(NS+'.'));
+    keys.forEach(k=>localStorage.removeItem(k));
+    alert(`Cleared ${keys.length} local watch-state key(s).`);
+  });
+
   // Card accordions collapsed by default
   qsa('.card .card-strip .chev').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -557,6 +745,12 @@ function init() {
       card.classList.toggle('open', open);
       body.style.display = open ? 'block':'none';
       btn.textContent = open ? '▾':'▸';
+      if (open && card.id === 'cardShows' && !qs('#shows-root').children.length) {
+        renderShowsAndMovies();
+      }
+      if (open && card.id === 'cardMovies' && !qs('#movies-root').children.length) {
+        renderShowsAndMovies();
+      }
     });
   });
 
@@ -579,7 +773,20 @@ function init() {
     qsa('.season-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false') toggle(h); });
     qsa('.show-head').forEach(h=>{ if(h.getAttribute('aria-expanded')!=='false')  toggle(h); });
   });
-  qs('#btnReload').addEventListener('click', ()=> load(true));
+
+  // QA drawer toggle + stats render
+  const qaBox = qs('#qaBox'); const qaHead = qs('#qaHead');
+  qaBox.hidden = false;
+  qaHead.addEventListener('click', ()=>{
+    qaBox.classList.toggle('open');
+    qaHead.textContent = qaBox.classList.contains('open') ? '▾ QA / Stats' : '▸ QA / Stats';
+    if (qaBox.classList.contains('open') && gLastModel) fillQA();
+  });
+  qs('#btnQA').addEventListener('click', ()=>{
+    qaBox.classList.add('open');
+    qaHead.textContent = '▾ QA / Stats';
+    if (gLastModel) fillQA();
+  });
 
   // Delegated clicks: status + More/Less
   document.addEventListener('click', (e)=>{
@@ -600,7 +807,7 @@ function init() {
       return;
     }
 
-    const more = e.target.closest('.more');
+    const more = e.target.closest('span.more');
     if(more){
       const row = qs('#'+more.dataset.more);
       const desc = row?.querySelector('.desc');
@@ -613,29 +820,83 @@ function init() {
     }
   });
 
-  load(false);
+  // Wire Reload button to open modal and show progress
+  qs('#btnReload').addEventListener('click', ()=> load(true, {showModal:true}));
+
+  // Initial load (no modal to keep startup clean)
+  load(false, {showModal:false});
 }
 
-async function load(force){
+function fillQA(){
+  const stats = buildStats(gLastModel || {shows:new Map(), seasonsByShow:new Map(), movies:[]});
+  const summary = [
+    `Build: ${APP_VERSION}`,
+    `Data:  ${gLastUsed || '(unknown)'}`,
+    `Shows: ${stats.showCount}`,
+    `Movies:${stats.movieCount}`,
+    `Seasons total:  ${stats.totalSeasons}`,
+    `Episodes total: ${stats.totalEpisodes}`
+  ].join('\n');
+  qs('#qaSummary').textContent = summary;
+
+  const lines = stats.perShow.map(r => `- ${r.show}: seasons=${r.seasons}, episodes=${r.episodes}`);
+  qs('#qaPerShow').textContent = lines.join('\n') || '(none)';
+
+  qs('#qaTried').textContent = (gLastTried||[]).join('\n') || '(none)';
+}
+
+/* Main load with optional modal */
+async function load(force, opts={showModal:false}){
+  const start = performance.now();
   const err = qs('#error'); err.textContent='';
-  const {text, tried, used} = await fetchData(force);
+
+  if (opts.showModal) modal.open();
+
+  modal.log(`Load started ${new Date().toLocaleString()}`);
+  modal.log(force ? 'Cache: reload' : 'Cache: no-store');
+
+  const progress = (msg)=> modal.log(msg);
+  const {text, tried, used, size, ms} = await fetchData(force, progress);
+  gLastTried = tried || [];
+  modal.setTimer(Math.round(performance.now()-start));
+  if (used) modal.setUrl(used);
+
+  let diag = { build: APP_VERSION, used: used || null, tried: tried || [], fetchMs: ms || null, size: size || null, ok:false };
   if(!text){
-    err.innerHTML = 'Could not load data file.<br><pre style="white-space:pre-wrap;background:#12161f;border:1px solid #2a3448;padding:8px;border-radius:8px;color:#cfdaf0;">'
-      + (tried||[]).join('\n') + '</pre>'
-      + 'Tip: keep the txt next to this HTML in /docs, or pass <code>?data=</code> with a RAW URL.';
-    qs('#shows-root').innerHTML=''; qs('#movies-root').innerHTML='';
-    qs('#showsCount').textContent='0'; qs('#moviesCount').textContent='0';
+    const m = 'Could not load data file.';
+    err.textContent = m;
+    modal.setError(m);
+    gLastDiag = diag;
     return;
   }
   try{
+    modal.log('Parsing data…');
     const model = parseDataFile(text);
+    gLastText = text;
+    gLastModel = model;
     renderAll(model, used);
+    renderShowsAndMovies();
+
+    const stats = buildStats(model);
+    modal.setCounts({
+      shows: stats.showCount,
+      movies: stats.movieCount,
+      seasons: stats.totalSeasons,
+      episodes: stats.totalEpisodes
+    });
+    modal.log(`Parsed OK. Shows=${stats.showCount}, Movies=${stats.movieCount}, Seasons=${stats.totalSeasons}, Episodes=${stats.totalEpisodes}`);
+    diag.ok = true; diag.stats = stats;
+    gLastDiag = diag;
   }catch(e){
     console.error(e);
     err.textContent = 'Parse error: '+e.message;
+    modal.setError('Parse error: '+e.message);
+    diag.error = String(e.message || e);
+    gLastDiag = diag;
   }
 }
 
+/* Utils */
 function esc(s){
   return String(s ?? '')
     .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
