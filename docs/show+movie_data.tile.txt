@@ -1,8 +1,8 @@
-SHOWS
-# SHOWS Header format
-# section header: show|tmdb_id|name|overview|#_of_seasons|date|status|source|schedule|tmdb_url_link (generated)
-# Seasons header: season|tmdb_id|seasonNum|year|overview|watchStatus
-# Episodes header: episode|tmdb_id|epNum|name|date|desc|runtime|source|vidSrc|mapple|nunFlix|tbd|watchStatus
+# show|tmdb_id|name|overview|numSeasons|firstAirDate|status|source|schedule
+# season|tmdb_id|seasonNum|year|overview|watchStatus
+# episode|tmdb_id|seasonNum|epNum|name|airDate|desc|runtime|source|watchStatus
+# movie|tmdb_id|name|overview|releaseDate|rating|runtime|source|watchStatus
+
 show|107113|Only Murders in the Building|Three strangers share an obsession with true crime and suddenly find themselves wrapped up in one.|5|2021-08-31|Running|Hulu|Tuesdays| (generated)
 season|107113|1|2021|The trio of Charles, Oliver, and Mabel investigate a murder in their Upper West Side apartment building, recording a podcast as they uncover secrets.|watched
 episode|107113|1|True Crime|2021-08-31|Upper West Side neighbors Charles, Oliver & Mabel bond over a shared love of true crime. When a fellow resident dies in their building, the trio determine to solve the mystery and record an accompanying podcast.|34m|Hulu|N/A|N/A|N/A|N/A|watched
